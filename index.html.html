@@ -21,80 +21,83 @@
     </div>
 
     <script>
+    // Ganti seluruh isi dari document.addEventListener dengan ini
+
     document.addEventListener('DOMContentLoaded', () => {
-        // ======================== GANTI URL INI DENGAN SANGAT TELITI ========================
-        // Ganti dengan Production URL dari workflow n8n GET-berita Anda.
-        const N8N_FETCH_URL = 'https://rested-on-bullfrog.ngrok-free.app/webhook/beritakan-input';
-        // ====================================================================================
+    const N8N_FETCH_URL = 'https://rested-on-bullfrog.ngrok-free.app/webhook/beritakan-input';
 
-        const newsContainer = document.getElementById('news-container');
-        const loadingMessage = document.getElementById('loading-message');
+    const newsContainer = document.getElementById('news-container');
+    const loadingMessage = document.getElementById('loading-message');
 
-        const fetchNewsData = async () => {
-            console.log("Mencoba mengambil data dari:", N8N_FETCH_URL);
+    const fetchNewsData = async () => {
+        console.log("Mencoba mengambil data dari:", N8N_FETCH_URL);
+        
+        if (!N8N_FETCH_URL || !N8N_FETCH_URL.includes('/webhook/')) {
+            loadingMessage.textContent = 'Error: URL n8n tidak valid. Pastikan itu adalah URL webhook.';
+            loadingMessage.className = 'text-center text-red-500 py-8';
+            return;
+        }
+
+        try {
+            const response = await fetch(N8N_FETCH_URL);
             
-            if (!N8N_FETCH_URL || !N8N_FETCH_URL.includes('/webhook/')) {
-                loadingMessage.textContent = 'Error: URL n8n tidak valid. Pastikan itu adalah URL webhook.';
-                loadingMessage.className = 'text-center text-red-500 py-8';
+            if (!response.ok) { throw new Error(`Server merespons dengan status: ${response.status}`); }
+            
+            const responseData = await response.json();
+            console.log("Data mentah diterima:", responseData);
+
+            let newsData = []; // Siapkan array kosong
+            
+            if (Array.isArray(responseData)) {
+                console.log("Data terdeteksi sebagai ARRAY. Memproses...");
+                newsData = responseData.map(item => item.json);
+            } else if (typeof responseData === 'object' && responseData !== null) {
+                console.log("Data terdeteksi sebagai OBJEK TUNGGAL. Membungkus dalam array...");
+                newsData = [responseData];
+            } else {
+                throw new Error("Format data yang diterima tidak dikenali (bukan array atau objek).");
+            }
+            
+            console.log("Data final yang siap dirender:", newsData);
+
+            if (newsData.length === 0 || !newsData[0].title) {
+                loadingMessage.textContent = 'Belum ada berita untuk ditampilkan.';
                 return;
             }
 
-            try {
-                const response = await fetch(N8N_FETCH_URL);
-                
-                // Cek Tipe Konten sebelum parsing
-                const contentType = response.headers.get("content-type");
-                if (!contentType || !contentType.includes("application/json")) {
-                    // Jika respons bukan JSON, lempar error dengan isi teksnya
-                    const responseText = await response.text();
-                    console.error("Server tidak mengembalikan JSON. Respons yang diterima:", responseText);
-                    throw new Error(`Server tidak mengembalikan JSON. Ini yang diterima: ${responseText.substring(0, 100)}...`);
-                }
+            renderNews(newsData);
 
-                if (!response.ok) {
-                    throw new Error(`Server merespons dengan status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log("Data mentah diterima:", data);
-
-                // n8n mengembalikan array dari objek, di mana setiap objek memiliki key "json"
-                // Kita perlu mengekstrak isi dari "json" tersebut.
-                const newsData = data.map(item => item.json);
-                console.log("Data setelah diproses:", newsData);
-
-                if (newsData.length === 0) {
-                    loadingMessage.textContent = 'Belum ada berita untuk ditampilkan.';
-                    return;
-                }
-
-                renderNews(newsData);
-
-            } catch (error) {
-                console.error("Gagal total:", error);
-                loadingMessage.textContent = `Gagal memuat berita: ${error.message}`;
-                loadingMessage.className = 'text-center text-red-500 py-8';
+        } catch (error) {
+            // Ini akan menangkap error JSON, network, dll.
+            console.error("Gagal total:", error);
+            // Cek apakah error karena <!DOCTYPE html>
+            if (error.message.includes("Unexpected token '<'")) {
+                 loadingMessage.textContent = 'Gagal: URL salah. Server mengembalikan halaman HTML, bukan data JSON.';
+            } else {
+                 loadingMessage.textContent = `Gagal memuat berita: ${error.message}`;
             }
-        };
+            loadingMessage.className = 'text-center text-red-500 py-8';
+        }
+    };
 
-        const renderNews = (newsItems) => {
-            newsContainer.innerHTML = ''; // Hapus pesan "Memuat berita..."
-            newsItems.forEach(item => {
-                const card = `
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 fade-in">
-                        <h3 class="text-lg font-bold text-beritakanRed">${item.title || 'Tanpa Judul'}</h3>
-                        <p class="text-xs text-gray-500 mb-2">${item.date || ''} • ${item.category || ''}</p>
-                        <img src="${item.thumbnailUrl || 'https://placehold.co/300x150/cccccc/ffffff?text=No+Image'}" alt="${item.title || 'Gambar'}" class="w-full h-40 object-cover rounded-md my-2">
-                        <p class="text-sm text-gray-700 dark:text-gray-300">${item.summary || ''}</p>
-                    </div>
-                `;
-                newsContainer.insertAdjacentHTML('beforeend', card);
-            });
-        };
+    const renderNews = (newsItems) => {
+        newsContainer.innerHTML = ''; // Hapus pesan "Memuat berita..."
+        newsItems.forEach(item => {
+            const card = `
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 fade-in" style="animation-delay: ${Math.random() * 0.5}s;">
+                    <h3 class="text-lg font-bold text-beritakanRed">${item.title || 'Tanpa Judul'}</h3>
+                    <p class="text-xs text-gray-500 mb-2">${item.date || ''} • ${item.category || ''}</p>
+                    <img src="${item.thumbnailUrl || 'https://placehold.co/600x300/cccccc/ffffff?text=No+Image'}" alt="${item.title || 'Gambar Berita'}" class="w-full h-48 object-cover rounded-md my-2">
+                    <p class="text-sm text-gray-700 dark:text-gray-300">${item.summary || 'Tidak ada ringkasan.'}</p>
+                </div>
+            `;
+            newsContainer.insertAdjacentHTML('beforeend', card);
+        });
+    };
 
-        // Mulai aplikasi
-        fetchNewsData();
-    });
+    // Mulai aplikasi
+    fetchNewsData();
+});
     </script>
 </body>
 </html>
