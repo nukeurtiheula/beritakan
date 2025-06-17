@@ -4,189 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Beritakan</title>
-
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts & Styles -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s; }
-        .notification { position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 0.5rem; color: white; font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.1); opacity: 0; transform: translateX(100%); transition: opacity 0.3s ease, transform 0.3s ease; z-index: 100; }
-        .notification.show { opacity: 1; transform: translateX(0); }
-        .notification.success { background-color: #28a745; }
-        .notification.error { background-color: #dc3545; }
-    </style>
-
-    <!-- Tailwind Config -->
-    <script>
-        tailwind.config = { theme: { extend: { colors: { beritakanRed: '#D32F2F', beritakanRedHover: '#B71C1C' } } } }
-    </script>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');body{font-family:'Inter',sans-serif;transition:background-color .3s}.notification{position:fixed;top:20px;right:20px;padding:1rem 1.5rem;border-radius:.5rem;color:#fff;font-weight:600;box-shadow:0 4px 6px rgba(0,0,0,.1);opacity:0;transform:translateX(100%);transition:opacity .3s ease,transform .3s ease;z-index:100}.notification.show{opacity:1;transform:translateX(0)}.notification.success{background-color:#28a745}.notification.error{background-color:#dc3545}</style>
+    <script>tailwind.config={theme:{extend:{colors:{beritakanRed:"#D32F2F",beritakanRedHover:"#B71C1C"}}}}</script>
 </head>
-
 <body class="bg-gray-100">
-
     <main id="admin-panel" class="container mx-auto max-w-4xl p-4 sm:p-6 hidden">
-        <header class="mb-8 pb-4 border-b border-gray-300">
-            <h1 class="text-3xl font-extrabold text-beritakanRed">🛠️ Admin Panel - Beritakan</h1>
-            <p class="text-gray-600 mt-1">Gunakan form di bawah ini untuk menambah berita baru.</p>
-        </header>
-
-        <!-- ===== KONFIGURASI URL GOOGLE SHEET ===== -->
-        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg shadow-sm mb-8">
-            <h3 class="text-lg font-bold text-blue-800 mb-2">Konfigurasi Google Sheet</h3>
-            <p class="text-sm text-blue-700 mb-3">Masukkan URL Web App dari Google Apps Script Anda. URL ini akan disimpan di browser Anda.</p>
-            <div class="flex flex-col sm:flex-row gap-2">
-                <input type="url" id="gscript-url-input" placeholder="Salin & tempel URL Web App dari Google di sini" class="flex-grow w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                <button id="save-url-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Simpan URL</button>
-            </div>
-        </div>
-        
-        <!-- Form Input Berita (HTML tidak berubah) -->
+        <header class="mb-8 pb-4 border-b border-gray-300"><h1 class="text-3xl font-extrabold text-beritakanRed">🛠️ Admin Panel - Beritakan</h1><p class="text-gray-600 mt-1">Gunakan form di bawah ini untuk menambah berita baru.</p></header>
+        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg shadow-sm mb-8"><h3 class="text-lg font-bold text-blue-800 mb-2">Konfigurasi Google Sheet</h3><p class="text-sm text-blue-700 mb-3">Masukkan URL Web App dari Google Apps Script Anda. URL ini akan disimpan di browser Anda.</p><div class="flex flex-col sm:flex-row gap-2"><input type="url" id="gscript-url-input" placeholder="Salin & tempel URL Web App dari Google di sini" class="flex-grow w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"><button id="save-url-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">Simpan URL</button></div></div>
         <div class="bg-white p-6 rounded-lg shadow-md mb-8"><h2 class="text-2xl font-bold text-gray-800 mb-6">Input Berita Baru</h2><form id="news-form" class="space-y-5"><div><label for="judul" class="block text-sm font-medium text-gray-700 mb-1">Judul Berita</label><input type="text" id="judul" name="judul" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed"></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label for="tanggal" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Publikasi</label><input type="date" id="tanggal" name="tanggal" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed"></div><div><label for="kategori" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label><select id="kategori" name="kategori" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed"><option>Teknologi</option><option>Politik</option><option>Gaya Hidup</option><option>Hiburan</option><option>Olahraga</option></select></div></div><div><label for="ringkasan" class="block text-sm font-medium text-gray-700 mb-1">Ringkasan (Summary)</label><textarea id="ringkasan" name="ringkasan" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed"></textarea></div><div><label for="isi" class="block text-sm font-medium text-gray-700 mb-1">Isi Berita Lengkap</label><textarea id="isi" name="isi" rows="7" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed" placeholder="Anda bisa menggunakan tag HTML sederhana seperti <p>, <b>, <i>, <ul>, <li>"></textarea></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center"><div><label for="thumbnail" class="block text-sm font-medium text-gray-700 mb-1">URL Gambar Thumbnail</label><input type="url" id="thumbnail" name="thumbnail" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed" placeholder="https://contoh.com/gambar.jpg"></div><div class="pt-6"><label for="trending" class="flex items-center space-x-3 cursor-pointer"><input type="checkbox" id="trending" name="trending" class="h-5 w-5 rounded border-gray-300 text-beritakanRed focus:ring-beritakanRed"><span class="text-sm font-medium text-gray-700">Jadikan Berita Trending? 🔥</span></label></div></div><div class="flex items-center gap-4 pt-4 border-t border-gray-200"><button type="submit" id="submit-btn" class="bg-beritakanRed text-white font-bold py-2 px-6 rounded-md hover:bg-beritakanRedHover transition-colors flex items-center gap-2"><span id="submit-text">+ Tambah Berita</span><div id="submit-spinner" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin hidden"></div></button><button type="button" id="reset-btn" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-md hover:bg-gray-600 transition-colors">🔁 Reset Form</button></div></form></div>
     </main>
-
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // ===== BAGIAN KONFIGURASI & KEAMANAN =====
-        const ADMIN_PASSWORD_HASH = 'a654b5de0f6e04a97f4c238dafd62f21651453175e1b212adf8917a516c55279';
-        const GSCRIPT_URL_KEY = 'https://script.google.com/macros/s/AKfycbyTITgQO1bSxa57fRGzUAuGtJhg2UCClIR8rSveiHoaS-78R0SkeRaTIDS_ucPNnOf-UQ/exec'; // Kunci untuk menyimpan URL di localStorage
-
-        async function sha256(message) { /* ... fungsi sha256 sama ... */ const msgBuffer = new TextEncoder().encode(message); const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer); const hashArray = Array.from(new Uint8Array(hashBuffer)); return hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); }
-        
-        async function authenticate() {
-            const password = prompt("Masukkan password admin:");
-            if (!password) { document.body.innerHTML = '<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Dibatalkan</h1>'; return; }
-            const inputHash = await sha256(password);
-            if (inputHash === ADMIN_PASSWORD_HASH) {
-                document.getElementById('admin-panel').classList.remove('hidden');
-                loadUrl(); // Muat URL setelah login berhasil
-            } else {
-                alert("Password salah! Akses ditolak.");
-                document.body.innerHTML = '<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Ditolak</h1>';
-            }
-        }
-        
-        // ===== BAGIAN FUNGSI FORM & APLIKASI =====
-        const newsForm = document.getElementById('news-form');
-        const submitBtn = document.getElementById('submit-btn');
-        const saveUrlBtn = document.getElementById('save-url-btn');
-        const gscriptUrlInput = document.getElementById('gscript-url-input');
-
-        function showNotification(message, type = 'success') { /* ... fungsi notifikasi sama ... */ const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); setTimeout(() => { notification.classList.add('show'); }, 10); setTimeout(() => { notification.classList.remove('show'); setTimeout(() => { notification.remove(); }, 300); }, 4000); }
-        
-        function saveUrl() {
-            const url = gscriptUrlInput.value.trim();
-            if (url && url.startsWith('https://script.google.com')) {
-                localStorage.setItem(GSCRIPT_URL_KEY, url);
-                showNotification('URL Google Sheet berhasil disimpan!', 'success');
-            } else {
-                showNotification('URL tidak valid. Pastikan Anda menyalin URL Web App.', 'error');
-            }
-        }
-
-        function loadUrl() {
-            gscriptUrlInput.value = localStorage.getItem(GSCRIPT_URL_KEY) || '';
-        }
-        
-        // Listener untuk submit form berita
-        // Ganti seluruh fungsi event listener form Anda dengan ini
-
-newsForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const gscriptUrl = localStorage.getItem(GSCRIPT_URL_KEY);
-
-    if (!gscriptUrl) {
-        showNotification('Error: URL Google Sheet belum disimpan.', 'error');
-        return;
-    }
-
-    document.getElementById('submit-text').textContent = 'Mengirim...';
-    document.getElementById('submit-spinner').classList.remove('hidden');
-    submitBtn.disabled = true;
-
-    const payload = {
-        judul: document.getElementById('judul').value,
-        tanggal: document.getElementById('tanggal').value,
-        kategori: document.getElementById('kategori').value,
-        ringkasan: document.getElementById('ringkasan').value,
-        isi: document.getElementById('isi').value,
-        thumbnail: document.getElementById('thumbnail').value,
-        trending: document.getElementById('trending').checked
-    };
-
-    console.log("Mengirim payload ke Google Sheet (mode no-cors):", payload);
-
-    try {
-        // MENGGUNAKAN MODE 'no-cors' UNTUK MENGATASI BLOKIR CORS
-        await fetch(gscriptUrl, {
-            method: 'POST',
-            mode: 'no-cors', // INI KUNCINYA!
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
+        document.addEventListener('DOMContentLoaded', () => {
+            const ADMIN_PASSWORD_HASH = 'a654b5de0f6e04a97f4c238dafd62f21651453175e1b212adf8917a516c55279';
+            const GSCRIPT_URL_KEY = 'https://script.google.com/macros/s/AKfycbyTITgQO1bSxa57fRGzUAuGtJhg2UCClIR8rSveiHoaS-78R0SkeRaTIDS_ucPNnOf-UQ/exec';
+            async function sha256(a){const b=new TextEncoder().encode(a),c=await crypto.subtle.digest("SHA-256",b);return Array.from(new Uint8Array(c)).map(a=>a.toString(16).padStart(2,"0")).join("")}
+            async function authenticate(){const a=prompt("Masukkan password admin:");if(!a)return void(document.body.innerHTML='<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Dibatalkan</h1>');const b=await sha256(a);b===ADMIN_PASSWORD_HASH?(document.getElementById("admin-panel").classList.remove("hidden"),loadUrl()):(alert("Password salah! Akses ditolak."),document.body.innerHTML='<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Ditolak</h1>')}
+            const newsForm=document.getElementById("news-form"),submitBtn=document.getElementById("submit-btn"),saveUrlBtn=document.getElementById("save-url-btn"),gscriptUrlInput=document.getElementById("gscript-url-input");
+            function showNotification(a,b="success"){const c=document.createElement("div");c.className=`notification ${b}`,c.textContent=a,document.body.appendChild(c),setTimeout(()=>{c.classList.add("show")},10),setTimeout(()=>{c.classList.remove("show"),setTimeout(()=>{c.remove()},300)},4e3)}
+            function saveUrl(){const a=gscriptUrlInput.value.trim();a&&a.startsWith("https://script.google.com")?(localStorage.setItem(GSCRIPT_URL_KEY,a),showNotification("URL Google Sheet berhasil disimpan!","success")):showNotification("URL tidak valid. Pastikan Anda menyalin URL Web App.","error")}
+            function loadUrl(){gscriptUrlInput.value=localStorage.getItem(GSCRIPT_URL_KEY)||"_"}
+            newsForm.addEventListener("submit",async a=>{a.preventDefault();const b=localStorage.getItem(GSCRIPT_URL_KEY);if(!b)return void showNotification("Error: URL Google Sheet belum disimpan. Harap isi dan simpan URL terlebih dahulu.","error");document.getElementById("submit-text").textContent="Mengirim...",document.getElementById("submit-spinner").classList.remove("hidden"),submitBtn.disabled=!0;const c={judul:document.getElementById("judul").value,tanggal:document.getElementById("tanggal").value,kategori:document.getElementById("kategori").value,ringkasan:document.getElementById("ringkasan").value,isi:document.getElementById("isi").value,thumbnail:document.getElementById("thumbnail").value,trending:document.getElementById("trending").checked};console.log("Mengirim payload ke Google Sheet (mode no-cors):",c);try{await fetch(b,{method:"POST",mode:"no-cors",body:JSON.stringify(c)}),showNotification("Berita berhasil dikirim! Periksa Google Sheet Anda.","success"),newsForm.reset()}catch(a){console.error("Gagal mengirim data (Network Error):",a),showNotification("Gagal mengirim: Masalah jaringan. Periksa koneksi internet Anda.","error")}finally{document.getElementById("submit-text").textContent="+ Tambah Berita",document.getElementById("submit-spinner").classList.add("hidden"),submitBtn.disabled=!1}});
+            saveUrlBtn.addEventListener("click",saveUrl),document.getElementById("reset-btn").addEventListener("click",()=>newsForm.reset()),authenticate();
         });
-        
-        // KARENA 'no-cors', kita tidak bisa memeriksa respons.
-        // Kita asumsikan pengiriman berhasil jika tidak ada error jaringan.
-        showNotification('Berita berhasil dikirim! Periksa Google Sheet Anda.', 'success');
-        newsForm.reset();
-
-    } catch (error) {
-        // Error di sini biasanya hanya terjadi jika ada masalah jaringan (misal: tidak ada internet)
-        console.error('Gagal mengirim data (Network Error):', error);
-        showNotification(`Gagal mengirim: Masalah jaringan. Periksa koneksi internet Anda.`, 'error');
-    } finally {
-        document.getElementById('submit-text').textContent = '+ Tambah Berita';
-        document.getElementById('submit-spinner').classList.add('hidden');
-        submitBtn.disabled = false;
-    }
-});
-
-            document.getElementById('submit-text').textContent = 'Mengirim...';
-            document.getElementById('submit-spinner').classList.remove('hidden');
-            submitBtn.disabled = true;
-
-            const payload = {
-                judul: document.getElementById('judul').value,
-                tanggal: document.getElementById('tanggal').value,
-                kategori: document.getElementById('kategori').value,
-                ringkasan: document.getElementById('ringkasan').value,
-                isi: document.getElementById('isi').value,
-                thumbnail: document.getElementById('thumbnail').value,
-                trending: document.getElementById('trending').checked
-            };
-
-            console.log("Mengirim payload ke Google Sheet:", payload);
-
-            try {
-                // Langsung mengirim ke Google Apps Script
-                const response = await fetch(gscriptUrl, {
-                    method: 'POST',
-                    // mode: 'no-cors' tidak diperlukan jika Apps Script di-deploy dengan benar
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Google lebih suka text/plain untuk post sederhana
-                    body: JSON.stringify(payload)
-                });
-                
-                // Meskipun kita tidak bisa membaca responsnya karena CORS, kita anggap sukses jika tidak ada network error
-                showNotification('Berita berhasil dikirim ke Google Sheet!', 'success');
-                newsForm.reset();
-
-            } catch (error) {
-                console.error('Gagal mengirim data:', error);
-                showNotification(`Gagal: ${error.message}. Periksa Console (F12).`, 'error');
-            } finally {
-                document.getElementById('submit-text').textContent = '+ Tambah Berita';
-                document.getElementById('submit-spinner').classList.add('hidden');
-                submitBtn.disabled = false;
-            }
-        });
-
-        saveUrlBtn.addEventListener('click', saveUrl);
-        document.getElementById('reset-btn').addEventListener('click', () => { newsForm.reset(); });
-        authenticate();
-    });
     </script>
 </body>
 </html>
