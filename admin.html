@@ -90,14 +90,59 @@
         }
         
         // Listener untuk submit form berita
-        newsForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const gscriptUrl = localStorage.getItem(GSCRIPT_URL_KEY);
+        // Ganti seluruh fungsi event listener form Anda dengan ini
 
-            if (!gscriptUrl) {
-                showNotification('Error: URL Google Sheet belum disimpan. Harap isi dan simpan URL terlebih dahulu.', 'error');
-                return;
-            }
+newsForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const gscriptUrl = localStorage.getItem(GSCRIPT_URL_KEY);
+
+    if (!gscriptUrl) {
+        showNotification('Error: URL Google Sheet belum disimpan.', 'error');
+        return;
+    }
+
+    document.getElementById('submit-text').textContent = 'Mengirim...';
+    document.getElementById('submit-spinner').classList.remove('hidden');
+    submitBtn.disabled = true;
+
+    const payload = {
+        judul: document.getElementById('judul').value,
+        tanggal: document.getElementById('tanggal').value,
+        kategori: document.getElementById('kategori').value,
+        ringkasan: document.getElementById('ringkasan').value,
+        isi: document.getElementById('isi').value,
+        thumbnail: document.getElementById('thumbnail').value,
+        trending: document.getElementById('trending').checked
+    };
+
+    console.log("Mengirim payload ke Google Sheet (mode no-cors):", payload);
+
+    try {
+        // MENGGUNAKAN MODE 'no-cors' UNTUK MENGATASI BLOKIR CORS
+        await fetch(gscriptUrl, {
+            method: 'POST',
+            mode: 'no-cors', // INI KUNCINYA!
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        // KARENA 'no-cors', kita tidak bisa memeriksa respons.
+        // Kita asumsikan pengiriman berhasil jika tidak ada error jaringan.
+        showNotification('Berita berhasil dikirim! Periksa Google Sheet Anda.', 'success');
+        newsForm.reset();
+
+    } catch (error) {
+        // Error di sini biasanya hanya terjadi jika ada masalah jaringan (misal: tidak ada internet)
+        console.error('Gagal mengirim data (Network Error):', error);
+        showNotification(`Gagal mengirim: Masalah jaringan. Periksa koneksi internet Anda.`, 'error');
+    } finally {
+        document.getElementById('submit-text').textContent = '+ Tambah Berita';
+        document.getElementById('submit-spinner').classList.add('hidden');
+        submitBtn.disabled = false;
+    }
+});
 
             document.getElementById('submit-text').textContent = 'Mengirim...';
             document.getElementById('submit-spinner').classList.remove('hidden');
