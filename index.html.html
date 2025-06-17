@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Beritakan - Portal Berita</title>
+    
+    <!-- Skrip & CSS -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');body{font-family:'Inter',sans-serif}.fade-in{animation:fadeIn .5s ease-in-out}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}.trending-card-overlay{background:linear-gradient(to top,rgba(0,0,0,.85),transparent 60%)}</style>
-    <script>tailwind.config={darkMode:"class",theme:{extend:{colors:{beritakanRed:"#D32F2F"}}}}</script>
+    <script>tailwind.config={darkMode:"class",theme:{extend:{colors:{beritakanRed:"#D32F2F"},typography:a=>({DEFAULT:{css:{"a":{color:a("colors.beritakanRed"),"&:hover":{color:a("colors.red.700")}},"h1,h2,h3,h4":{color:a("colors.gray.800"),".dark &":{color:a("colors.gray.200")}}}}})}}}</script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
@@ -19,48 +21,54 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // ======================================================================
-        // PASTE URL ANDA YANG SUDAH TERBUKTI VALID DI SINI
-        const N8N_FETCH_URL = 'https://rested-on-bullfrog.ngrok-free.app/webhook/beritakan-get';
+        // !!!! WAJIB DIGANTI !!!!
+        // GANTI DENGAN URL WEB APP DARI GOOGLE APPS SCRIPT ANDA
+        const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbzEN_k0wTuDVSIPKa9_OUhPnpwxef-2qhTCc8z9qIsoJ-Kux9qITjR16-KWXk8gNFw9zg/exec';
         // ======================================================================
 
         const newsContainer = document.getElementById('news-container');
         const loadingMessage = document.getElementById('loading-message');
 
         const fetchNewsData = async () => {
-            console.log("Memulai fetch ke:", N8N_FETCH_URL);
+            console.log("Memulai fetch langsung ke Google Sheet API:", GOOGLE_SHEET_API_URL);
+            
             try {
-                const response = await fetch(N8N_FETCH_URL);
-                if (!response.ok) throw new Error(`Server Error: ${response.status}`);
+                // Untuk memanggil Google Script dari browser, kita harus melakukan "JSONP hack"
+                // Kita membuat tag script, bukan menggunakan fetch biasa, untuk menghindari CORS
+                const script = document.createElement('script');
+                // Kita akan memanggil fungsi 'handleData' setelah data dimuat
+                script.src = `${GOOGLE_SHEET_API_URL}?callback=handleData`; 
                 
-                // dataFromN8n akan menjadi:  [ { "data": [ { ...berita... } ] } ]
-                const dataFromN8n = await response.json();
-                console.log("Data mentah dari n8n:", JSON.stringify(dataFromN8n, null, 2));
-
-                // ==== INI ADALAH KUNCI UTAMA PERBAIKANNYA ====
-                // 1. Ambil item pertama dari array luar: dataFromN8n[0]
-                // 2. Dari item itu, ambil nilai dari key "data": .data
-                const newsData = dataFromN8n[0].data;
-
-                if (!newsData || !Array.isArray(newsData)) {
-                    throw new Error("Gagal mengekstrak array berita dari format: `[ { data: [...] } ]`");
-                }
+                script.onerror = () => {
+                    throw new Error("Gagal memuat data dari Google Script. Periksa URL dan pastikan sudah di-deploy dengan benar.");
+                };
                 
-                console.log("Data berita berhasil diekstrak:", newsData);
-                
-                if (newsData.length === 0) {
-                    loadingMessage.textContent = 'Tidak ada berita untuk ditampilkan.';
-                    return;
-                }
+                document.body.appendChild(script);
 
-                renderNews(newsData);
             } catch (error) {
                 console.error('PROSES GAGAL:', error);
                 loadingMessage.innerHTML = `<b class="text-red-500">Gagal Memuat:</b> ${error.message}.`;
             }
         };
+        
+        // Fungsi ini akan dipanggil oleh skrip dari Google
+        window.handleData = (data) => {
+            console.log("Data berhasil diterima dari Google Sheet:", data);
+            
+            if (data && Array.isArray(data)) {
+                renderNews(data);
+            } else {
+                loadingMessage.innerHTML = `<b class="text-red-500">Error:</b> Format data tidak valid.`;
+            }
+        };
 
         const renderNews = (newsItems) => {
-            newsContainer.innerHTML = '';
+            newsContainer.innerHTML = ''; // Hapus pesan status
+            if (newsItems.length === 0) {
+                loadingMessage.textContent = 'Tidak ada berita untuk ditampilkan.';
+                newsContainer.appendChild(loadingMessage);
+                return;
+            }
             newsItems.forEach(item => {
                 const card = `
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4" style="animation: fadeIn .5s ease-out forwards;">
@@ -73,6 +81,7 @@
             });
         };
         
+        // Inisialisasi sederhana untuk Telegram
         try { const tg=window.Telegram.WebApp; tg.ready(); if(tg.colorScheme==='dark'){document.documentElement.classList.add('dark')} const user=tg.initDataUnsafe?.user; document.getElementById('user-greeting').textContent=(user&&user.first_name)?`Hai, ${user.first_name}!`:'Selamat Datang!'; tg.expand() } catch(e){}
         
         fetchNewsData();
