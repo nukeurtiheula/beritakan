@@ -16,16 +16,94 @@
     </main>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // ===== INI PERBAIKANNYA =====
             const ADMIN_PASSWORD_HASH = 'a654b5de0f6e04a97f4c238dafd62f21651453175e1b212adf8917a516c55279';
-            const GSCRIPT_URL_KEY = 'https://script.google.com/macros/s/AKfycbzEN_k0wTuDVSIPKa9_OUhPnpwxef-2qhTCc8z9qIsoJ-Kux9qITjR16-KWXk8gNFw9zg/exec';
+            // 'GSCRIPT_URL_KEY' adalah NAMA KUNCI, bukan URL itu sendiri.
+            const GSCRIPT_URL_KEY = 'beritakan_gscript_url_v1'; 
+
             async function sha256(a){const b=new TextEncoder().encode(a),c=await crypto.subtle.digest("SHA-256",b);return Array.from(new Uint8Array(c)).map(a=>a.toString(16).padStart(2,"0")).join("")}
-            async function authenticate(){const a=prompt("Masukkan password admin:");if(!a)return void(document.body.innerHTML='<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Dibatalkan</h1>');const b=await sha256(a);b===ADMIN_PASSWORD_HASH?(document.getElementById("admin-panel").classList.remove("hidden"),loadUrl()):(alert("Password salah! Akses ditolak."),document.body.innerHTML='<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Ditolak</h1>')}
-            const newsForm=document.getElementById("news-form"),submitBtn=document.getElementById("submit-btn"),saveUrlBtn=document.getElementById("save-url-btn"),gscriptUrlInput=document.getElementById("gscript-url-input");
+            
+            async function authenticate(){
+                const a=prompt("Masukkan password admin:");
+                if(!a)return void(document.body.innerHTML='<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Dibatalkan</h1>');
+                const b=await sha256(a);
+                if(b===ADMIN_PASSWORD_HASH){
+                    document.getElementById("admin-panel").classList.remove("hidden");
+                    loadUrl(); // Muat URL setelah login berhasil
+                } else {
+                    alert("Password salah! Akses ditolak.");
+                    document.body.innerHTML='<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Ditolak</h1>';
+                }
+            }
+
+            const newsForm=document.getElementById("news-form");
+            const submitBtn=document.getElementById("submit-btn");
+            const saveUrlBtn=document.getElementById("save-url-btn");
+            const gscriptUrlInput=document.getElementById("gscript-url-input");
+
             function showNotification(a,b="success"){const c=document.createElement("div");c.className=`notification ${b}`,c.textContent=a,document.body.appendChild(c),setTimeout(()=>{c.classList.add("show")},10),setTimeout(()=>{c.classList.remove("show"),setTimeout(()=>{c.remove()},300)},4e3)}
-            function saveUrl(){const a=gscriptUrlInput.value.trim();a&&a.startsWith("https://script.google.com")?(localStorage.setItem(GSCRIPT_URL_KEY,a),showNotification("URL Google Sheet berhasil disimpan!","success")):showNotification("URL tidak valid. Pastikan Anda menyalin URL Web App.","error")}
-            function loadUrl(){gscriptUrlInput.value=localStorage.getItem(GSCRIPT_URL_KEY)||"_"}
-            newsForm.addEventListener("submit",async a=>{a.preventDefault();const b=localStorage.getItem(GSCRIPT_URL_KEY);if(!b)return void showNotification("Error: URL Google Sheet belum disimpan. Harap isi dan simpan URL terlebih dahulu.","error");document.getElementById("submit-text").textContent="Mengirim...",document.getElementById("submit-spinner").classList.remove("hidden"),submitBtn.disabled=!0;const c={judul:document.getElementById("judul").value,tanggal:document.getElementById("tanggal").value,kategori:document.getElementById("kategori").value,ringkasan:document.getElementById("ringkasan").value,isi:document.getElementById("isi").value,thumbnail:document.getElementById("thumbnail").value,trending:document.getElementById("trending").checked};console.log("Mengirim payload ke Google Sheet (mode no-cors):",c);try{await fetch(b,{method:"POST",mode:"no-cors",body:JSON.stringify(c)}),showNotification("Berita berhasil dikirim! Periksa Google Sheet Anda.","success"),newsForm.reset()}catch(a){console.error("Gagal mengirim data (Network Error):",a),showNotification("Gagal mengirim: Masalah jaringan. Periksa koneksi internet Anda.","error")}finally{document.getElementById("submit-text").textContent="+ Tambah Berita",document.getElementById("submit-spinner").classList.add("hidden"),submitBtn.disabled=!1}});
-            saveUrlBtn.addEventListener("click",saveUrl),document.getElementById("reset-btn").addEventListener("click",()=>newsForm.reset()),authenticate();
+            
+            function saveUrl(){
+                const url = gscriptUrlInput.value.trim();
+                if(url && url.startsWith("https://script.google.com")){
+                    // Simpan URL ke localStorage menggunakan NAMA KUNCI yang benar
+                    localStorage.setItem(GSCRIPT_URL_KEY, url);
+                    showNotification("URL Google Sheet berhasil disimpan!","success");
+                } else {
+                    showNotification("URL tidak valid. Pastikan Anda menyalin URL Web App dari Google.","error");
+                }
+            }
+
+            function loadUrl(){
+                // Ambil URL dari localStorage menggunakan NAMA KUNCI yang benar
+                gscriptUrlInput.value = localStorage.getItem(GSCRIPT_URL_KEY) || "";
+            }
+
+            newsForm.addEventListener("submit", async a => {
+                a.preventDefault();
+                // Ambil URL yang sudah tersimpan dengan NAMA KUNCI yang benar
+                const gscriptUrl = localStorage.getItem(GSCRIPT_URL_KEY);
+                
+                if(!gscriptUrl) return void showNotification("Error: URL Google Sheet belum disimpan. Harap isi dan simpan URL terlebih dahulu.","error");
+                
+                document.getElementById("submit-text").textContent="Mengirim...";
+                document.getElementById("submit-spinner").classList.remove("hidden");
+                submitBtn.disabled=true;
+
+                const payload={
+                    judul:document.getElementById("judul").value,
+                    tanggal:document.getElementById("tanggal").value,
+                    kategori:document.getElementById("kategori").value,
+                    ringkasan:document.getElementById("ringkasan").value,
+                    isi:document.getElementById("isi").value,
+                    thumbnail:document.getElementById("thumbnail").value,
+                    trending:document.getElementById("trending").checked
+                };
+
+                console.log("Mengirim payload ke Google Sheet:", payload);
+
+                try {
+                    // Gunakan mode 'no-cors' untuk mengatasi masalah CORS saat POST
+                    await fetch(gscriptUrl, {
+                        method: "POST",
+                        mode: "no-cors",
+                        body: JSON.stringify(payload)
+                    });
+                    showNotification("Berita berhasil dikirim! Periksa Google Sheet Anda.","success");
+                    newsForm.reset();
+                } catch(error) {
+                    console.error("Gagal mengirim data (Network Error):", error);
+                    showNotification("Gagal mengirim: Masalah jaringan. Periksa koneksi internet Anda.","error");
+                } finally {
+                    document.getElementById("submit-text").textContent="+ Tambah Berita";
+                    document.getElementById("submit-spinner").classList.add("hidden");
+                    submitBtn.disabled=false;
+                }
+            });
+            
+            saveUrlBtn.addEventListener("click", saveUrl);
+            document.getElementById("reset-btn").addEventListener("click", () => newsForm.reset());
+            authenticate();
         });
     </script>
 </body>
