@@ -12,92 +12,71 @@
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
     <div id="app-container" class="max-w-3xl mx-auto flex flex-col min-h-screen">
-        <header class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-20 shadow-sm"><div class="flex justify-between items-center"><h1 class="text-2xl font-extrabold text-beritakanRed">Beritakan</h1><p id="user-greeting" class="text-sm text-gray-600 dark:text-gray-400">Selamat Datang!</p></div></header>
-        <main class="flex-grow p-4 pb-24">
-            <div id="news-container" class="space-y-4 pt-4">
-                <p id="loading-message" class="text-center text-gray-500 py-8">Memuat berita...</p>
-            </div>
-        </main>
+        <header class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-20 shadow-sm"><div class="flex justify-between items-center"><h1 class="text-2xl font-extrabold text-beritakanRed">Beritakan</h1><p id="user-greeting" class="text-sm text-gray-600 dark:text-gray-400"></p></div></header>
+        <main class="flex-grow p-4 pb-24"><div id="news-container" class="space-y-4 pt-4"><p id="loading-message" class="text-center text-gray-500 py-8">Memuat berita...</p></div></main>
     </div>
 
     <script>
-    // Ganti seluruh isi dari document.addEventListener dengan ini
-
     document.addEventListener('DOMContentLoaded', () => {
-    const N8N_FETCH_URL = 'https://rested-on-bullfrog.ngrok-free.app/webhook/beritakan-get';
+        // ======================================================================
+        // PASTE URL ANDA YANG SUDAH TERBUKTI VALID DI SINI
+        const N8N_FETCH_URL = 'https://rested-on-bullfrog.ngrok-free.app/webhook/beritakan-get';
+        // ======================================================================
 
-    const newsContainer = document.getElementById('news-container');
-    const loadingMessage = document.getElementById('loading-message');
+        const newsContainer = document.getElementById('news-container');
+        const loadingMessage = document.getElementById('loading-message');
 
-    const fetchNewsData = async () => {
-        console.log("Mencoba mengambil data dari:", N8N_FETCH_URL);
+        const fetchNewsData = async () => {
+            console.log("Memulai fetch ke:", N8N_FETCH_URL);
+            try {
+                const response = await fetch(N8N_FETCH_URL);
+                if (!response.ok) throw new Error(`Server Error: ${response.status}`);
+                
+                // dataFromN8n akan menjadi:  [ { "data": [ { ...berita... } ] } ]
+                const dataFromN8n = await response.json();
+                console.log("Data mentah dari n8n:", JSON.stringify(dataFromN8n, null, 2));
+
+                // ==== INI ADALAH KUNCI UTAMA PERBAIKANNYA ====
+                // 1. Ambil item pertama dari array luar: dataFromN8n[0]
+                // 2. Dari item itu, ambil nilai dari key "data": .data
+                const newsData = dataFromN8n[0].data;
+
+                if (!newsData || !Array.isArray(newsData)) {
+                    throw new Error("Gagal mengekstrak array berita dari format: `[ { data: [...] } ]`");
+                }
+                
+                console.log("Data berita berhasil diekstrak:", newsData);
+                
+                if (newsData.length === 0) {
+                    loadingMessage.textContent = 'Tidak ada berita untuk ditampilkan.';
+                    return;
+                }
+
+                renderNews(newsData);
+            } catch (error) {
+                console.error('PROSES GAGAL:', error);
+                loadingMessage.innerHTML = `<b class="text-red-500">Gagal Memuat:</b> ${error.message}.`;
+            }
+        };
+
+        const renderNews = (newsItems) => {
+            newsContainer.innerHTML = '';
+            newsItems.forEach(item => {
+                const card = `
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4" style="animation: fadeIn .5s ease-out forwards;">
+                        <h3 class="text-lg font-bold text-beritakanRed">${item.title || 'Tanpa Judul'}</h3>
+                        <p class="text-xs text-gray-500 mb-2">${item.date || ''} • ${item.category || ''}</p>
+                        <img src="${item.thumbnailUrl || 'https://placehold.co/600x300/ccc/fff?text=No+Image'}" alt="${item.title || 'Gambar'}" class="w-full h-48 object-cover rounded-md my-2">
+                        <p class="text-sm text-gray-700 dark:text-gray-300">${item.summary || ''}</p>
+                    </div>`;
+                newsContainer.insertAdjacentHTML('beforeend', card);
+            });
+        };
         
-        if (!N8N_FETCH_URL || !N8N_FETCH_URL.includes('/webhook/')) {
-            loadingMessage.textContent = 'Error: URL n8n tidak valid. Pastikan itu adalah URL webhook.';
-            loadingMessage.className = 'text-center text-red-500 py-8';
-            return;
-        }
-
-        try {
-            const response = await fetch(N8N_FETCH_URL);
-            
-            if (!response.ok) { throw new Error(`Server merespons dengan status: ${response.status}`); }
-            
-            const responseData = await response.json();
-            console.log("Data mentah diterima:", responseData);
-
-            let newsData = []; // Siapkan array kosong
-            
-            if (Array.isArray(responseData)) {
-                console.log("Data terdeteksi sebagai ARRAY. Memproses...");
-                newsData = responseData.map(item => item.json);
-            } else if (typeof responseData === 'object' && responseData !== null) {
-                console.log("Data terdeteksi sebagai OBJEK TUNGGAL. Membungkus dalam array...");
-                newsData = [responseData];
-            } else {
-                throw new Error("Format data yang diterima tidak dikenali (bukan array atau objek).");
-            }
-            
-            console.log("Data final yang siap dirender:", newsData);
-
-            if (newsData.length === 0 || !newsData[0].title) {
-                loadingMessage.textContent = 'Belum ada berita untuk ditampilkan.';
-                return;
-            }
-
-            renderNews(newsData);
-
-        } catch (error) {
-            // Ini akan menangkap error JSON, network, dll.
-            console.error("Gagal total:", error);
-            // Cek apakah error karena <!DOCTYPE html>
-            if (error.message.includes("Unexpected token '<'")) {
-                 loadingMessage.textContent = 'Gagal: URL salah. Server mengembalikan halaman HTML, bukan data JSON.';
-            } else {
-                 loadingMessage.textContent = `Gagal memuat berita: ${error.message}`;
-            }
-            loadingMessage.className = 'text-center text-red-500 py-8';
-        }
-    };
-
-    const renderNews = (newsItems) => {
-        newsContainer.innerHTML = ''; // Hapus pesan "Memuat berita..."
-        newsItems.forEach(item => {
-            const card = `
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 fade-in" style="animation-delay: ${Math.random() * 0.5}s;">
-                    <h3 class="text-lg font-bold text-beritakanRed">${item.title || 'Tanpa Judul'}</h3>
-                    <p class="text-xs text-gray-500 mb-2">${item.date || ''} • ${item.category || ''}</p>
-                    <img src="${item.thumbnailUrl || 'https://placehold.co/600x300/cccccc/ffffff?text=No+Image'}" alt="${item.title || 'Gambar Berita'}" class="w-full h-48 object-cover rounded-md my-2">
-                    <p class="text-sm text-gray-700 dark:text-gray-300">${item.summary || 'Tidak ada ringkasan.'}</p>
-                </div>
-            `;
-            newsContainer.insertAdjacentHTML('beforeend', card);
-        });
-    };
-
-    // Mulai aplikasi
-    fetchNewsData();
-});
+        try { const tg=window.Telegram.WebApp; tg.ready(); if(tg.colorScheme==='dark'){document.documentElement.classList.add('dark')} const user=tg.initDataUnsafe?.user; document.getElementById('user-greeting').textContent=(user&&user.first_name)?`Hai, ${user.first_name}!`:'Selamat Datang!'; tg.expand() } catch(e){}
+        
+        fetchNewsData();
+    });
     </script>
 </body>
 </html>
