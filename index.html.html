@@ -2,333 +2,263 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Beritakan - Portal Berita</title>
-    
-    <!-- Telegram Web App Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts & Custom Styles -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent; /* Hilangkan highlight saat disentuh di mobile */
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn .5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .trending-card-overlay {
-            background: linear-gradient(to top, rgba(0,0,0,0.85), transparent 60%);
-        }
-
-        /* Loading Spinner */
-        .loader {
-            width: 48px;
-            height: 48px;
-            border: 5px solid;
-            border-color: #D32F2F transparent;
-            border-radius: 50%;
-            display: inline-block;
-            box-sizing: border-box;
-            animation: rotation 1s linear infinite;
-        }
-        @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .trending-card-overlay { background: linear-gradient(to top, rgba(0,0,0,.85), transparent 60%); }
+        .btn-category.active { background-color: #D32F2F; color: white; }
+        .btn-like.liked svg { fill: #D32F2F; stroke: #D32F2F; }
+        .btn-like.liked span { color: #D32F2F; font-weight: 600; }
     </style>
-
-    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
-            darkMode: 'class',
+            darkMode: "class",
             theme: {
                 extend: {
-                    colors: {
-                        beritakanRed: '#D32F2F',
-                    },
-                    typography: (theme) => ({
-                        DEFAULT: {
-                            css: {
-                                color: theme('colors.gray.700'),
-                                '.dark &': { color: theme('colors.gray.300')},
-                                'a': { color: theme('colors.beritakanRed'), '&:hover': { color: theme('colors.red.700') } },
-                                'h1,h2,h3,h4': { color: theme('colors.gray.900'), '.dark &': { color: theme('colors.gray.100') } },
-                            },
-                        },
-                    }),
+                    colors: { beritakanRed: "#D32F2F" },
+                    typography: a => ({ DEFAULT: { css: { "a": { color: a("colors.beritakanRed"), "&:hover": { color: a("colors.red.700") } }, "h1,h2,h3,h4": { color: a("colors.gray.800"), ".dark &": { color: a("colors.gray.200") } } } } })
                 }
             }
         }
     </script>
 </head>
-
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
     <div id="app-container" class="max-w-3xl mx-auto flex flex-col min-h-screen">
-
-        <!-- ===== HEADER ===== -->
-        <header class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-30 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <header class="p-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-20 shadow-sm">
             <div class="flex justify-between items-center">
                 <h1 class="text-2xl font-extrabold text-beritakanRed">Beritakan</h1>
-                <p id="user-greeting" class="text-sm text-gray-600 dark:text-gray-400"></p>
+                <div class="flex items-center space-x-3">
+                    <p id="user-greeting" class="text-sm text-gray-600 dark:text-gray-400 hidden sm:block"></p>
+                    <button id="refresh-btn" title="Refresh Berita" class="text-gray-600 dark:text-gray-400 hover:text-beritakanRed dark:hover:text-beritakanRed transition-transform duration-300 active:scale-90">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M4 4l1.5 1.5A9 9 0 0120.5 10M20 20l-1.5-1.5A9 9 0 013.5 14" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </header>
 
-        <!-- ===== KONTEN UTAMA ===== -->
-        <main class="flex-grow p-4 pb-24">
-            <!-- Loading/Error State -->
-            <div id="loading-container" class="text-center py-16 flex flex-col items-center justify-center">
-                <div class="loader"></div>
-                <p id="loading-message" class="text-gray-500 mt-4">Memuat berita...</p>
-            </div>
-
-            <!-- Main Content (Hidden by default) -->
-            <div id="main-content" class="hidden">
-                <!-- Konten Tab Beranda -->
-                <div id="beranda-content" class="tab-content space-y-8">
-                    <div id="trending-news-slider"></div>
-                    <div>
-                        <h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200 border-b-2 border-beritakanRed pb-2">Berita Terbaru</h2>
-                        <div id="news-container" class="space-y-4 pt-4"></div>
-                    </div>
-                </div>
-
-                <!-- Konten Tab Kategori -->
-                <div id="kategori-content" class="tab-content hidden">
-                    <h2 class="text-xl font-bold mb-4">Pilih Kategori</h2>
-                    <div id="category-list" class="flex flex-wrap gap-3"></div>
-                </div>
-
-                <!-- Konten Tab Favorit -->
-                <div id="favorit-content" class="tab-content hidden space-y-6">
-                    <h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200 border-b-2 border-beritakanRed pb-2">❤️ Berita Favorit</h2>
-                    <div id="favorite-container" class="space-y-4"></div>
+        <main id="main-content" class="flex-grow p-4 pb-24 space-y-6">
+            <!-- Trending Section -->
+            <div id="trending-section" class="hidden">
+                <h2 class="text-xl font-bold mb-3 text-gray-800 dark:text-gray-200">Trending 🔥</h2>
+                <div id="trending-container" class="flex overflow-x-auto space-x-4 pb-4 no-scrollbar">
+                    <!-- Trending cards will be injected here -->
                 </div>
             </div>
+
+            <!-- Latest News Section -->
+            <div id="latest-section" class="hidden">
+                <h2 class="text-xl font-bold mb-3 text-gray-800 dark:text-gray-200">Berita Terbaru</h2>
+                <div id="category-filter-container" class="flex flex-wrap gap-2 mb-4">
+                    <!-- Category filter buttons will be injected here -->
+                </div>
+                <div id="latest-news-container" class="space-y-4">
+                    <!-- Latest news cards will be injected here -->
+                </div>
+            </div>
+
+            <p id="loading-message" class="text-center text-gray-500 py-8">Memuat berita...</p>
         </main>
-
-        <!-- ===== NAVIGASI TAB ===== -->
-        <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-30">
-            <div class="max-w-3xl mx-auto flex justify-around">
-                <button data-tab="beranda" class="tab-button flex-1 py-3 text-center text-sm font-semibold text-beritakanRed border-t-2 border-beritakanRed">📰 Beranda</button>
-                <button data-tab="kategori" class="tab-button flex-1 py-3 text-center text-sm font-semibold text-gray-500 dark:text-gray-400 border-t-2 border-transparent">📚 Kategori</button>
-                <button data-tab="favorit" class="tab-button flex-1 py-3 text-center text-sm font-semibold text-gray-500 dark:text-gray-400 border-t-2 border-transparent">❤️ Favorit</button>
-            </div>
-        </nav>
-    </div>
-
-    <!-- ===== MODAL BACA SELENGKAPNYA ===== -->
-    <div id="news-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
-        <div id="modal-content" class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col transform scale-95 transition-all duration-300">
-            <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center">
-                <h2 id="modal-title" class="text-xl font-bold text-beritakanRed"></h2>
-                <button id="close-modal-btn" class="text-2xl text-gray-500 hover:text-gray-900 dark:hover:text-white">×</button>
-            </div>
-            <div class="p-6 overflow-y-auto">
-                <p id="modal-date" class="text-sm text-gray-500 dark:text-gray-400 mb-4"></p>
-                <div id="modal-body" class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"></div>
-            </div>
-        </div>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // ======================================================================
-        // URL ANDA YANG SUDAH TERBUKTI AKTIF
+        // URL ANDA YANG SUDAH TERBUKTI AKTIF SUDAH DIMASUKKAN DI SINI
         const GOOGLE_SHEET_API_URL = 'https://script.google.com/macros/s/AKfycby_yL-V3ZsgO9A3Awa4tAUWTu4zJPPCb83XESErWTC1-kbiQj8KzPnMPslIEaqekj_P/exec';
         // ======================================================================
 
-        let newsData = [];
-        let favorites = JSON.parse(localStorage.getItem('beritakan_favorites_v2')) || [];
-
-        // DOM Elements
-        const loadingContainer = document.getElementById('loading-container');
         const mainContent = document.getElementById('main-content');
-        const newsContainer = document.getElementById('news-container');
-        const trendingSliderContainer = document.getElementById('trending-news-slider');
-        const categoryList = document.getElementById('category-list');
-        const favoriteContainer = document.getElementById('favorite-container');
-        const modal = document.getElementById('news-modal');
-        const modalContent = document.getElementById('modal-content');
+        const trendingSection = document.getElementById('trending-section');
+        const latestSection = document.getElementById('latest-section');
+        const trendingContainer = document.getElementById('trending-container');
+        const categoryFilterContainer = document.getElementById('category-filter-container');
+        const latestNewsContainer = document.getElementById('latest-news-container');
+        const loadingMessage = document.getElementById('loading-message');
+        const refreshBtn = document.getElementById('refresh-btn');
 
-        // ==== LOGIC (NO CHANGES, IT'S ALREADY WORKING) ====
+        let allNewsData = [];
+
         window.handleData = (data) => {
+            console.log("SUKSES: Fungsi handleData dipanggil dengan data:", data);
             const scriptTag = document.getElementById('jsonp-script');
             if (scriptTag) scriptTag.remove();
-            if (data.error) throw new Error(`Error dari Google Script: ${data.error}`);
-            if (!data || !Array.isArray(data)) throw new Error("Format data tidak valid.");
             
-            newsData = data;
-            console.log("Data berita berhasil diproses:", newsData);
-            
-            // Show main content and hide loading
-            loadingContainer.classList.add('hidden');
-            mainContent.classList.remove('hidden');
-            mainContent.classList.add('fade-in');
+            refreshBtn.classList.remove('animate-spin');
 
-            // Render all components
-            renderTrendingNewsSlider();
-            renderNews();
-            renderCategories();
-            renderFavorites();
+            if (data.error) {
+                loadingMessage.innerHTML = `<b class="text-red-500">Error:</b> ${data.error}`;
+                return;
+            }
+            if (!data || !Array.isArray(data)) {
+                loadingMessage.innerHTML = `<b class="text-red-500">Error:</b> Format data tidak valid.`;
+                return;
+            }
+            
+            loadingMessage.style.display = 'none';
+            trendingSection.classList.remove('hidden');
+            latestSection.classList.remove('hidden');
+            
+            allNewsData = data.sort((a, b) => b.id - a.id);
+            
+            renderAllContent();
         };
 
         const fetchNewsData = () => {
+            console.log("Memulai request JSONP ke:", GOOGLE_SHEET_API_URL);
+            loadingMessage.innerHTML = 'Memuat berita...';
+            loadingMessage.style.display = 'block';
+            trendingSection.classList.add('hidden');
+            latestSection.classList.add('hidden');
+            refreshBtn.classList.add('animate-spin');
+
             const script = document.createElement('script');
             script.id = 'jsonp-script';
-            script.src = `${GOOGLE_SHEET_API_URL}?callback=handleData`; 
+            script.src = `${GOOGLE_SHEET_API_URL}?callback=handleData&_=${new Date().getTime()}`; // Cache busting
             script.onerror = () => {
-                document.getElementById('loading-message').innerHTML = `<b class="text-red-500">Gagal:</b> Gagal memuat skrip dari Google. Periksa URL API dan koneksi internet.`;
+                console.error("ERROR: Gagal memuat tag <script>.");
+                loadingMessage.innerHTML = `<b class="text-red-500">Gagal:</b> Tidak dapat terhubung ke server berita. Periksa koneksi internet Anda.`;
+                refreshBtn.classList.remove('animate-spin');
             };
             document.head.appendChild(script);
         };
-
-        // ==== RENDER FUNCTIONS ====
-        const renderTrendingNewsSlider = () => {
-            const trendingNews = newsData.filter(n => n.trending === true);
-            if (trendingNews.length === 0) { trendingSliderContainer.style.display = 'none'; return; }
-            trendingSliderContainer.style.display = 'block';
-            
-            const trendingCards = trendingNews.map(item => `
-                <div class="news-card flex-shrink-0 w-64 h-80 rounded-lg shadow-lg overflow-hidden relative cursor-pointer group" data-id="${item.id}">
-                    <img src="${item.thumbnailUrl}" alt="${item.title}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300">
-                    <div class="absolute inset-0 trending-card-overlay"></div>
-                    <div class="absolute bottom-0 left-0 p-4 text-white">
-                        <span class="text-xs bg-beritakanRed px-2 py-1 rounded-md font-semibold">${item.category}</span>
-                        <h4 class="font-bold mt-2 text-md leading-tight">${item.title}</h4>
-                    </div>
-                </div>
-            `).join('');
-            trendingSliderContainer.innerHTML = `<div><h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">🔥 Sedang Tren</h2><div class="flex space-x-4 overflow-x-auto pb-4 -mx-4 px-4 no-scrollbar">${trendingCards}</div></div>`;
-        };
         
-        const renderNewsCard = (newsItem) => {
-            const isFavorite = favorites.includes(String(newsItem.id));
-            const heartIcon = isFavorite ? '❤️' : '🤍';
-            return `
-                <div class="news-card bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden cursor-pointer group" data-id="${newsItem.id}">
-                    <div class="flex items-start space-x-4 p-4">
-                        <img src="${newsItem.thumbnailUrl}" alt="${newsItem.title}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-md flex-shrink-0 group-hover:opacity-80 transition-opacity">
-                        <div class="flex-grow">
-                             <div class="flex justify-between items-start">
-                                <h3 class="text-md sm:text-lg font-bold mb-1 flex-1 pr-2 group-hover:text-beritakanRed transition-colors">${newsItem.title}</h3>
-                                <button class="like-btn text-2xl p-1 -mr-1" data-id="${newsItem.id}">${heartIcon}</button>
-                            </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">${item.date} • ${item.category}</p>
-                            <p class="hidden sm:block text-sm text-gray-600 dark:text-gray-300 leading-relaxed">${item.summary}</p>
+        const renderAllContent = (category = 'Semua') => {
+            // Assume top 5 are trending
+            renderTrending(allNewsData.slice(0, 5));
+            renderCategories(allNewsData, category);
+            renderLatestNews(allNewsData, category);
+        }
+
+        const renderTrending = (trendingItems) => {
+            trendingContainer.innerHTML = '';
+            if (trendingItems.length === 0) {
+                trendingSection.classList.add('hidden');
+                return;
+            }
+            trendingItems.forEach(item => {
+                const card = `
+                    <div class="fade-in relative w-64 h-40 flex-shrink-0 rounded-lg overflow-hidden shadow-md group">
+                        <img src="${item.thumbnailUrl || 'https://placehold.co/600x400/ccc/fff?text=Berita'}" alt="${item.title || 'Gambar'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <div class="absolute inset-0 trending-card-overlay flex flex-col justify-end p-3">
+                            <h3 class="text-white font-bold text-md leading-tight">${item.title || 'Tanpa Judul'}</h3>
+                            <p class="text-gray-300 text-xs mt-1">${item.category || ''}</p>
                         </div>
-                    </div>
-                </div>`;
+                    </div>`;
+                trendingContainer.insertAdjacentHTML('beforeend', card);
+            });
         };
 
-        const renderNews = (filterCategory = null) => {
-            newsContainer.innerHTML = '';
-            trendingSliderContainer.style.display = filterCategory ? 'none' : 'block';
-            const filteredNews = (filterCategory ? newsData.filter(n => n.category === filterCategory) : newsData).sort((a,b) => b.id - a.id);
-            if (filteredNews.length === 0) { newsContainer.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 py-8">Tidak ada berita ditemukan.</p>`; return; }
-            filteredNews.forEach(item => newsContainer.insertAdjacentHTML('beforeend', renderNewsCard(item)));
+        const renderCategories = (newsItems, activeCategory) => {
+            const categories = ['Semua', ...new Set(newsItems.map(item => item.category).filter(Boolean))];
+            categoryFilterContainer.innerHTML = '';
+            categories.forEach(category => {
+                const isActive = category === activeCategory;
+                const button = `
+                    <button class="btn-category px-4 py-1.5 text-sm font-semibold rounded-full transition-colors duration-200 ${isActive ? 'active' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}" data-category="${category}">
+                        ${category}
+                    </button>`;
+                categoryFilterContainer.insertAdjacentHTML('beforeend', button);
+            });
         };
 
-        const renderFavorites = () => {
-            favoriteContainer.innerHTML = '';
-            const favoriteNews = newsData.filter(n => favorites.includes(String(n.id))).sort((a,b) => b.id - a.id);
-            if (favoriteNews.length === 0) { favoriteContainer.innerHTML = `<div class="text-center py-16"><p class="text-lg font-medium text-gray-500">Anda belum punya berita favorit</p><p class="text-sm text-gray-400 mt-2">Tekan ikon hati untuk menambahkan.</p></div>`; return; }
-            favoriteNews.forEach(item => favoriteContainer.insertAdjacentHTML('beforeend', renderNewsCard(item)));
-        };
-        
-        const renderCategories = () => {
-            const categories = ['Semua', ...new Set(newsData.map(n => n.category).filter(Boolean))];
-            categoryList.innerHTML = '';
-            categories.forEach(cat => {
-                const button = document.createElement('button');
-                button.textContent = cat;
-                button.dataset.category = cat;
-                button.className = 'category-filter-btn bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-full text-sm font-semibold hover:bg-beritakanRed hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-beritakanRed dark:focus:ring-offset-gray-900';
-                categoryList.appendChild(button);
+        const renderLatestNews = (newsItems, category) => {
+            latestNewsContainer.innerHTML = '';
+            const filteredNews = category === 'Semua' 
+                ? newsItems 
+                : newsItems.filter(item => item.category === category);
+
+            if (filteredNews.length === 0) {
+                latestNewsContainer.innerHTML = '<p class="text-center text-gray-500 py-8">Tidak ada berita untuk kategori ini.</p>';
+                return;
+            }
+
+            filteredNews.forEach(item => {
+                const card = `
+                    <div class="fade-in bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+                        <h3 class="text-lg font-bold text-beritakanRed">${item.title || 'Tanpa Judul'}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">${item.date || ''} • ${item.category || ''}</p>
+                        <img src="${item.thumbnailUrl || 'https://placehold.co/600x300/ccc/fff?text=No+Image'}" alt="${item.title || 'Gambar'}" class="w-full h-48 object-cover rounded-md my-3">
+                        <p class="text-sm text-gray-700 dark:text-gray-300 mb-4">${item.summary || ''}</p>
+                        <div class="flex items-center justify-start space-x-6 text-sm border-t border-gray-200 dark:border-gray-700 pt-3">
+                            <button class="btn-like flex items-center space-x-1.5 text-gray-500 dark:text-gray-400 hover:text-beritakanRed dark:hover:text-beritakanRed transition-colors" data-action="like">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
+                                </svg>
+                                <span class="font-medium">Suka</span>
+                                <span class="like-count text-gray-600 dark:text-gray-300 font-semibold">0</span>
+                            </button>
+                            <button class="flex items-center space-x-1.5 text-gray-500 dark:text-gray-400 hover:text-beritakanRed dark:hover:text-beritakanRed transition-colors" data-action="comment">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                                <span class="font-medium">Komentar</span>
+                            </button>
+                        </div>
+                    </div>`;
+                latestNewsContainer.insertAdjacentHTML('beforeend', card);
             });
         };
         
-        // ==== EVENT LISTENERS & HELPERS ====
-        const switchTab = (tabName) => {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            document.querySelectorAll('.tab-button').forEach(b => {
-                const isActive = b.dataset.tab === tabName;
-                b.classList.toggle('text-beritakanRed', isActive);
-                b.classList.toggle('border-beritakanRed', isActive);
-                b.classList.toggle('text-gray-500', !isActive);
-                b.classList.toggle('dark:text-gray-400', !isActive);
-                b.classList.toggle('border-transparent', !isActive);
-            });
-            document.getElementById(`${tabName}-content`).classList.remove('hidden');
-        };
+        // Event Delegation for dynamic elements
+        mainContent.addEventListener('click', (e) => {
+            // Category Filter Click
+            const categoryButton = e.target.closest('.btn-category');
+            if (categoryButton) {
+                const category = categoryButton.dataset.category;
+                renderAllContent(category);
+                return;
+            }
 
-        const openModal = (newsId) => {
-            const newsItem = newsData.find(n => String(n.id) === String(newsId));
-            if (!newsItem) return;
-            document.getElementById('modal-title').textContent = newsItem.title;
-            document.getElementById('modal-date').textContent = `${newsItem.date} • ${newsItem.category}`;
-            document.getElementById('modal-body').innerHTML = newsItem.content;
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modalContent.classList.remove('scale-95');
-            }, 10);
-        };
-        const closeModal = () => {
-            modal.classList.add('opacity-0');
-            modalContent.classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        };
+            // Like Button Click
+            const likeButton = e.target.closest('[data-action="like"]');
+            if (likeButton) {
+                likeButton.classList.toggle('liked');
+                const countSpan = likeButton.querySelector('.like-count');
+                let currentLikes = parseInt(countSpan.textContent, 10);
+                countSpan.textContent = likeButton.classList.contains('liked') ? currentLikes + 1 : currentLikes - 1;
+                return;
+            }
 
-        const toggleFavorite = (newsId, btnElement) => {
-            newsId = String(newsId);
-            const index = favorites.indexOf(newsId);
-            if (index > -1) { favorites.splice(index, 1); btnElement.textContent = '🤍'; } 
-            else { favorites.push(newsId); btnElement.textContent = '❤️'; }
-            localStorage.setItem('beritakan_favorites_v2', JSON.stringify(favorites));
-        };
-
-        document.getElementById('app-container').addEventListener('click', (e) => {
-            const newsCard = e.target.closest('.news-card');
-            const likeBtn = e.target.closest('.like-btn');
-            const categoryBtn = e.target.closest('.category-filter-btn');
-
-            if (likeBtn) {
-                e.stopPropagation();
-                toggleFavorite(likeBtn.dataset.id, likeBtn);
-            } else if (newsCard) {
-                openModal(newsCard.dataset.id);
-            } else if (categoryBtn) {
-                document.querySelectorAll('.category-filter-btn').forEach(btn => btn.classList.remove('bg-beritakanRed', 'text-white'));
-                categoryBtn.classList.add('bg-beritakanRed', 'text-white');
-                const category = categoryBtn.dataset.category;
-                renderNews(category === 'Semua' ? null : category);
-                switchTab('beranda');
+            // Comment Button Click
+            const commentButton = e.target.closest('[data-action="comment"]');
+            if (commentButton) {
+                alert('Fitur komentar akan segera tersedia!');
+                return;
             }
         });
 
-        document.querySelectorAll('.tab-button').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
-        document.getElementById('close-modal-btn').addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+        // Refresh button listener
+        refreshBtn.addEventListener('click', fetchNewsData);
+
+        // Telegram Web App Initialization
+        try { 
+            const tg = window.Telegram.WebApp; 
+            tg.ready(); 
+            if (tg.colorScheme === 'dark') { document.documentElement.classList.add('dark'); }
+            const user = tg.initDataUnsafe?.user; 
+            const greetingEl = document.getElementById('user-greeting');
+            if (user && user.first_name) {
+                greetingEl.textContent = `Hai, ${user.first_name}!`;
+                greetingEl.classList.remove('hidden');
+            }
+            tg.expand();
+        } catch (e) {
+            console.warn('Telegram WebApp script not found or failed. Running in browser mode.');
+            document.getElementById('user-greeting').classList.add('hidden');
+        }
         
-        // ==== INITIALIZATION ====
-        try { const tg=window.Telegram.WebApp; tg.ready(); if(tg.colorScheme==='dark'){document.documentElement.classList.add('dark')} const user=tg.initDataUnsafe?.user; document.getElementById('user-greeting').textContent=(user&&user.first_name)?`Hai, ${user.first_name}!`:'Selamat Datang!'; tg.expand() } catch(e){}
+        // Initial Fetch
         fetchNewsData();
     });
     </script>
