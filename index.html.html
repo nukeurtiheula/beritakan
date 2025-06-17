@@ -87,7 +87,6 @@
 
         let allNewsData = [];
 
-        // --- DATA HANDLING ---
         window.handleData = (data) => {
             const scriptTag = document.getElementById('jsonp-script');
             if (scriptTag) scriptTag.remove();
@@ -98,7 +97,7 @@
             loadingMessage.style.display = 'none';
             trendingSection.classList.remove('hidden');
             latestSection.classList.remove('hidden');
-            allNewsData = data.sort((a, b) => b.id - a.id); // Sort by newest first
+            allNewsData = data.sort((a, b) => b.id - a.id);
             renderAllContent();
         };
 
@@ -119,9 +118,7 @@
             document.head.appendChild(script);
         };
 
-        // --- RENDERING ---
         const renderAllContent = (category = 'Semua') => {
-            // Filter news with `isTrending: true` for the trending section
             renderTrending(allNewsData.filter(item => item.isTrending === true));
             renderCategories(allNewsData, category);
             renderLatestNews(allNewsData, category);
@@ -129,25 +126,19 @@
         
         const renderTrending = (items) => {
             trendingContainer.innerHTML = '';
-            // Only show the section if there are trending items
-            if (items.length === 0) { 
-                trendingSection.style.display = 'none';
-                return; 
-            }
+            if (items.length === 0) { trendingSection.style.display = 'none'; return; }
             trendingSection.style.display = 'block';
-            items.forEach(item => {
-                trendingContainer.insertAdjacentHTML('beforeend', `
-                    <div class="fade-in relative w-64 h-40 flex-shrink-0 rounded-lg overflow-hidden shadow-md group cursor-pointer news-card" data-id="${item.id}">
-                        <img src="${item.thumbnailUrl || 'https://placehold.co/600x400'}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                        <div class="absolute inset-0 trending-card-overlay flex flex-col justify-end p-3"><h3 class="text-white font-bold text-md leading-tight">${item.title}</h3><p class="text-gray-300 text-xs mt-1">${item.category}</p></div>
-                    </div>`);
-            });
+            trendingContainer.innerHTML = items.map(item => `
+                <div class="fade-in relative w-64 h-40 flex-shrink-0 rounded-lg overflow-hidden shadow-md group cursor-pointer news-card" data-id="${item.id}">
+                    <img src="${item.thumbnailUrl || 'https://placehold.co/600x400'}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    <div class="absolute inset-0 trending-card-overlay flex flex-col justify-end p-3"><h3 class="text-white font-bold text-md leading-tight">${item.title}</h3><p class="text-gray-300 text-xs mt-1">${item.category}</p></div>
+                </div>`).join('');
         };
         
-        const renderCategories = (items, active) => {
+        const renderCategories = (items, activeCategory) => {
             const categories = ['Semua', ...new Set(items.map(i => i.category).filter(Boolean))];
             categoryFilterContainer.innerHTML = categories.map(cat => `
-                <button class="btn-category px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${cat === active ? 'active bg-beritakanRed text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'}" data-category="${cat}">${cat}</button>
+                <button class="btn-category px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${cat === activeCategory ? 'active' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'}" data-category="${cat}">${cat}</button>
             `).join('');
         };
         
@@ -160,50 +151,79 @@
                             <h3 class="text-lg font-bold text-beritakanRed">${item.title}</h3>
                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">${item.date} • ${item.category}</p>
                             <img src="${item.thumbnailUrl || 'https://placehold.co/600x300'}" alt="${item.title}" class="w-full h-48 object-cover rounded-md my-3">
-                            <p class="text-sm text-gray-700 dark:text-gray-300 mb-4">${item.summary}</p>
+                            <p class="text-sm text-gray-700 dark:text-gray-300">${item.summary}</p>
                         </div>
                         <div class="flex items-center justify-start space-x-5 text-sm border-t dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
-                            <!-- Action buttons here, same as before -->
+                            <button class="btn-like flex items-center space-x-1.5 text-gray-500 dark:text-gray-400 hover:text-beritakanRed" data-action="like"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" /></svg><span class="font-medium">Suka</span></button>
+                            <button class="flex items-center space-x-1.5 text-gray-500 dark:text-gray-400 hover:text-beritakanRed" data-action="comment"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg><span class="font-medium">Komentar</span></button>
+                            <button class="flex items-center space-x-1.5 text-gray-500 dark:text-gray-400 hover:text-beritakanRed" data-action="share" data-id="${item.id}"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" /></svg><span class="font-medium">Bagikan</span></button>
                         </div>
                     </div>`).join('');
         };
         
-        // --- MODAL & ACTIONS ---
         const openModal = (newsItem) => {
             document.getElementById('modal-title').textContent = newsItem.title;
             document.getElementById('modal-image').src = newsItem.thumbnailUrl || 'https://placehold.co/600x300';
             document.getElementById('modal-meta').textContent = `${newsItem.date} • ${newsItem.category}`;
-            // Use fullContent if available, otherwise fallback to a paragraph with the summary
             document.getElementById('modal-full-content').innerHTML = newsItem.fullContent || `<p>${newsItem.summary}</p>`;
             modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            document.body.style.overflow = 'hidden';
         };
 
         const closeModal = () => {
             modal.classList.add('hidden');
-            document.body.style.overflow = ''; // Restore background scrolling
+            document.body.style.overflow = '';
         };
 
-        // --- EVENT LISTENERS ---
+        const handleShare = async (item) => {
+            const shareData = { title: `Beritakan: ${item.title}`, text: item.summary, url: window.location.href };
+            try {
+                if (navigator.share) await navigator.share(shareData);
+                else throw new Error('Web Share API not supported');
+            } catch (err) {
+                alert('Fitur berbagi tidak didukung di browser ini.');
+            }
+        };
+
+        const handleComment = () => {
+            try {
+                const tg = window.Telegram.WebApp;
+                tg.showPopup({
+                    title: 'Diskusi', message: 'Anda akan diarahkan ke grup diskusi. Lanjutkan?',
+                    buttons: [{ id: 'discuss', type: 'default', text: 'Lanjutkan' }, { type: 'cancel' }]
+                }, (buttonId) => {
+                    if (buttonId === 'discuss') tg.openTelegramLink('https://t.me/YourDiscussionGroup'); // Ganti dengan link grup Anda
+                });
+            } catch (e) { alert('Fitur komentar hanya tersedia di aplikasi Telegram.'); }
+        };
+
         mainContent.addEventListener('click', (e) => {
             const categoryBtn = e.target.closest('.btn-category');
-            const card = e.target.closest('.news-card');
+            if(categoryBtn) { renderAllContent(categoryBtn.dataset.category); return; }
 
-            if (categoryBtn) {
-                renderAllContent(categoryBtn.dataset.category);
-                return;
-            }
-            if (card) {
+            const card = e.target.closest('.news-card');
+            if (card) { 
                 const item = allNewsData.find(i => i.id == card.dataset.id);
                 if (item) openModal(item);
+                return;
+            }
+            
+            const actionTarget = e.target.closest('[data-action]');
+            if(actionTarget) {
+                const action = actionTarget.dataset.action;
+                if(action === 'like') { actionTarget.classList.toggle('liked'); }
+                if(action === 'comment') { handleComment(); }
+                if(action === 'share') { 
+                    const item = allNewsData.find(i => i.id == actionTarget.dataset.id);
+                    if (item) handleShare(item);
+                }
             }
         });
 
         refreshBtn.addEventListener('click', fetchNewsData);
         modalCloseBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); }); // Close modal if overlay is clicked
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-        // --- TELEGRAM & INITIALIZATION ---
         try { 
             const tg = window.Telegram.WebApp; 
             tg.ready(); 
