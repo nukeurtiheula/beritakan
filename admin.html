@@ -17,7 +17,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const ADMIN_PASSWORD_HASH = 'a654b5de0f6e04a97f4c238dafd62f21651453175e1b212adf8917a516c55279';
-            const GSCRIPT_URL_KEY = 'https://script.google.com/macros/s/AKfycbyTITgQO1bSxa57fRGzUAuGtJhg2UCClIR8rSveiHoaS-78R0SkeRaTIDS_ucPNnOf-UQ/exec';
+            const GSCRIPT_URL_KEY = 'https://script.google.com/macros/s/AKfycbzEN_k0wTuDVSIPKa9_OUhPnpwxef-2qhTCc8z9qIsoJ-Kux9qITjR16-KWXk8gNFw9zg/exec';
             async function sha256(a){const b=new TextEncoder().encode(a),c=await crypto.subtle.digest("SHA-256",b);return Array.from(new Uint8Array(c)).map(a=>a.toString(16).padStart(2,"0")).join("")}
             async function authenticate(){const a=prompt("Masukkan password admin:");if(!a)return void(document.body.innerHTML='<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Dibatalkan</h1>');const b=await sha256(a);b===ADMIN_PASSWORD_HASH?(document.getElementById("admin-panel").classList.remove("hidden"),loadUrl()):(alert("Password salah! Akses ditolak."),document.body.innerHTML='<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Ditolak</h1>')}
             const newsForm=document.getElementById("news-form"),submitBtn=document.getElementById("submit-btn"),saveUrlBtn=document.getElementById("save-url-btn"),gscriptUrlInput=document.getElementById("gscript-url-input");
