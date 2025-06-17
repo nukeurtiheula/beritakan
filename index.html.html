@@ -47,9 +47,23 @@
             </div>
         </header>
 
-        <main id="main-content" class="flex-grow p-4 pb-24 space-y-6">
-            <div id="trending-section" class="hidden"><h2 class="text-xl font-bold mb-3 text-gray-800 dark:text-gray-200">Trending 🔥</h2><div id="trending-container" class="flex overflow-x-auto space-x-4 pb-4 no-scrollbar"></div></div>
-            <div id="latest-section" class="hidden"><h2 class="text-xl font-bold mb-3 text-gray-800 dark:text-gray-200">Berita Terbaru</h2><div id="category-filter-container" class="flex flex-wrap gap-2 mb-4"></div><div id="latest-news-container" class="space-y-4"></div></div>
+        <main id="main-content" class="flex-grow space-y-6">
+            <!-- Trending Slider Section -->
+            <div id="trending-section" class="hidden pt-4">
+                <h2 class="text-xl font-bold mb-3 text-gray-800 dark:text-gray-200 px-4">Trending 🔥</h2>
+                <!-- Container for the slider with scroll-snap -->
+                <div id="trending-container" class="flex overflow-x-auto space-x-4 pb-4 no-scrollbar snap-x snap-mandatory scroll-pl-4">
+                    <!-- Cards will be injected here. Note the scroll-pl-4 for padding on snap -->
+                </div>
+            </div>
+            
+            <!-- Latest News Section -->
+            <div id="latest-section" class="hidden px-4 pb-24">
+                <h2 class="text-xl font-bold mb-3 text-gray-800 dark:text-gray-200">Berita Terbaru</h2>
+                <div id="category-filter-container" class="flex flex-wrap gap-2 mb-4"></div>
+                <div id="latest-news-container" class="space-y-4"></div>
+            </div>
+
             <p id="loading-message" class="text-center text-gray-500 py-8">Memuat berita...</p>
         </main>
     </div>
@@ -102,7 +116,6 @@
         };
 
         const fetchNewsData = () => {
-            console.log("Memulai request JSONP...");
             loadingMessage.innerHTML = 'Memuat berita...';
             loadingMessage.style.display = 'block';
             trendingSection.classList.add('hidden');
@@ -128,11 +141,18 @@
             trendingContainer.innerHTML = '';
             if (items.length === 0) { trendingSection.style.display = 'none'; return; }
             trendingSection.style.display = 'block';
-            trendingContainer.innerHTML = items.map(item => `
-                <div class="fade-in relative w-64 h-40 flex-shrink-0 rounded-lg overflow-hidden shadow-md group cursor-pointer news-card" data-id="${item.id}">
+            
+            // Add a blank spacer at the end for better scrolling experience
+            const cardHTML = items.map(item => `
+                <div class="fade-in relative w-[85vw] max-w-sm h-56 flex-shrink-0 snap-start rounded-xl overflow-hidden shadow-lg group cursor-pointer news-card" data-id="${item.id}">
                     <img src="${item.thumbnailUrl || 'https://placehold.co/600x400'}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                    <div class="absolute inset-0 trending-card-overlay flex flex-col justify-end p-3"><h3 class="text-white font-bold text-md leading-tight">${item.title}</h3><p class="text-gray-300 text-xs mt-1">${item.category}</p></div>
+                    <div class="absolute inset-0 trending-card-overlay flex flex-col justify-end p-4">
+                        <h3 class="text-white font-bold text-lg leading-tight shadow-black [text-shadow:1px_1px_2px_var(--tw-shadow-color)]">${item.title}</h3>
+                        <p class="text-gray-300 text-xs mt-1">${item.category}</p>
+                    </div>
                 </div>`).join('');
+            
+            trendingContainer.innerHTML = cardHTML + `<div class="flex-shrink-0 w-1 snap-start"></div>`; // Add spacer
         };
         
         const renderCategories = (items, activeCategory) => {
@@ -180,9 +200,7 @@
             try {
                 if (navigator.share) await navigator.share(shareData);
                 else throw new Error('Web Share API not supported');
-            } catch (err) {
-                alert('Fitur berbagi tidak didukung di browser ini.');
-            }
+            } catch (err) { alert('Fitur berbagi tidak didukung di browser ini.'); }
         };
 
         const handleComment = () => {
@@ -192,7 +210,7 @@
                     title: 'Diskusi', message: 'Anda akan diarahkan ke grup diskusi. Lanjutkan?',
                     buttons: [{ id: 'discuss', type: 'default', text: 'Lanjutkan' }, { type: 'cancel' }]
                 }, (buttonId) => {
-                    if (buttonId === 'discuss') tg.openTelegramLink('https://t.me/YourDiscussionGroup'); // Ganti dengan link grup Anda
+                    if (buttonId === 'discuss') tg.openTelegramLink('https://t.me/YourDiscussionGroup');
                 });
             } catch (e) { alert('Fitur komentar hanya tersedia di aplikasi Telegram.'); }
         };
