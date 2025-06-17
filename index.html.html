@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Beritakan - Portal Berita</title>
     
     <!-- Telegram Web App Script -->
@@ -11,6 +11,7 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Google Fonts & Custom Styles -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         
@@ -27,23 +28,18 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Style untuk overlay di kartu trending */
         .trending-card-overlay {
-            background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0) 60%);
+            background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0) 60%);
         }
     </style>
 
+    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
-            darkMode: 'class',
+            darkMode: 'class', // Mengaktifkan mode gelap berdasarkan class di <html>
             theme: {
                 extend: {
                     colors: {
@@ -53,6 +49,7 @@
                         DEFAULT: {
                             css: {
                                 'a': { color: theme('colors.beritakanRed'), '&:hover': { color: theme('colors.red.700') } },
+                                'h1,h2,h3,h4': { color: theme('colors.gray.800'), '.dark &': { color: theme('colors.gray.200') } },
                             },
                         },
                     }),
@@ -75,37 +72,35 @@
         </header>
 
         <!-- ===== KONTEN UTAMA ===== -->
-        <main class="flex-grow p-4 pb-24 sm:pb-4">
+        <main class="flex-grow p-4 pb-24">
             <!-- Konten Tab Beranda -->
             <div id="beranda-content" class="tab-content fade-in space-y-6">
-                <!-- Slider Berita Trending akan dirender di sini -->
                 <div id="trending-news-slider"></div>
-
                 <div>
                     <h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200 border-b-2 border-beritakanRed pb-2">Berita Terbaru</h2>
                     <div id="news-container" class="space-y-4 pt-4">
-                        <!-- Berita akan dirender di sini oleh JavaScript -->
+                         <!-- Berita akan dirender di sini oleh JavaScript -->
+                         <p class="text-center text-gray-500 py-8">Memuat berita...</p>
                     </div>
                 </div>
-
-                <div id="beranda-sponsors"></div>
             </div>
 
             <!-- Konten Tab Kategori -->
             <div id="kategori-content" class="tab-content hidden">
                 <h2 class="text-xl font-bold mb-4">Pilih Kategori</h2>
-                <div id="category-list" class="flex flex-wrap gap-3"></div>
+                <div id="category-list" class="flex flex-wrap gap-3">
+                    <p class="text-gray-500">Kategori akan muncul setelah berita dimuat.</p>
+                </div>
             </div>
 
             <!-- Konten Tab Favorit -->
             <div id="favorit-content" class="tab-content hidden space-y-6">
                  <div id="favorite-container" class="space-y-4"></div>
-                <div id="favorit-sponsors"></div>
             </div>
         </main>
 
         <!-- ===== NAVIGASI TAB ===== -->
-        <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 sm:relative sm:border-t-0 sm:order-first sm:mb-0 sm:shadow-none z-20">
+        <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-20">
             <div class="max-w-3xl mx-auto flex justify-around">
                 <button data-tab="beranda" class="tab-button flex-1 py-3 text-center text-sm font-semibold text-beritakanRed border-b-2 border-beritakanRed">📰 Beranda</button>
                 <button data-tab="kategori" class="tab-button flex-1 py-3 text-center text-sm font-semibold text-gray-500 dark:text-gray-400">📚 Kategori</button>
@@ -118,7 +113,7 @@
     <!-- ===== MODAL BACA SELENGKAPNYA ===== -->
     <div id="news-modal" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4 hidden">
         <div id="modal-content" class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative fade-in">
-            <button id="close-modal-btn" class="absolute top-3 right-4 text-2xl text-gray-500 hover:text-gray-900 dark:hover:text-white">&times;</button>
+            <button id="close-modal-btn" class="absolute top-3 right-4 text-2xl text-gray-500 hover:text-gray-900 dark:hover:text-white">×</button>
             <h2 id="modal-title" class="text-2xl font-bold mb-2 text-beritakanRed"></h2>
             <p id="modal-date" class="text-sm text-gray-500 dark:text-gray-400 mb-4"></p>
             <div id="modal-body" class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300"></div>
@@ -127,72 +122,81 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- DATA DUMMY DENGAN THUMBNAIL & STATUS TRENDING ---
-        const newsData = [
-            { id: 1, title: "Terobosan Baru dalam Teknologi AI Generatif", date: "25 Juli 2023", category: "Teknologi", summary: "Startup meluncurkan model AI yang memahami konteks visual dan teks dengan akurasi tinggi.", content: "<p>Detail lengkap...</p>", thumbnailUrl: "https://placehold.co/120x120/0288D1/FFFFFF?text=AI", trending: true },
-            { id: 2, title: "Pemerintah Resmikan Kebijakan Ekonomi Baru", date: "24 Juli 2023", category: "Politik", summary: "Fokus kebijakan baru adalah mendorong investasi di sektor UMKM dan ekonomi hijau.", content: "<p>Detail lengkap...</p>", thumbnailUrl: "https://placehold.co/120x120/512DA8/FFFFFF?text=Gov", trending: true },
-            { id: 3, title: "Tren Fashion 'Dopamine Dressing' Kembali Populer", date: "23 Juli 2023", category: "Gaya Hidup", summary: "Mengenakan pakaian berwarna cerah terbukti dapat meningkatkan suasana hati.", content: "<p>Detail lengkap...</p>", thumbnailUrl: "https://placehold.co/120x120/E91E63/FFFFFF?text=Mode", trending: false },
-            { id: 4, title: "Film 'Saga Nusantara' Pecahkan Rekor Box Office", date: "22 Juli 2023", category: "Hiburan", summary: "Film fantasi lokal meraup pendapatan tertinggi di minggu pertama penayangannya.", content: "<p>Detail lengkap...</p>", thumbnailUrl: "https://placehold.co/120x120/F57C00/FFFFFF?text=Film", trending: true },
-            { id: 5, title: "Perkembangan Jaringan 5G di Daerah Terpencil", date: "21 Juli 2023", category: "Teknologi", summary: "Operator seluler memperluas jangkauan 5G ke wilayah pedesaan untuk digitalisasi.", content: "<p>Detail lengkap...</p>", thumbnailUrl: "https://placehold.co/120x120/00796B/FFFFFF?text=5G", trending: false },
-            { id: 6, title: "Debat Parlemen Mengenai RUU Privasi Data", date: "20 Juli 2023", category: "Politik", summary: "RUU Perlindungan Data Pribadi menjadi topik hangat dalam sidang paripurna.", content: "<p>Detail lengkap...</p>", thumbnailUrl: "https://placehold.co/120x120/7B1FA2/FFFFFF?text=RUU", trending: false },
-        ];
-        
-        const sponsorData = [
-            { name: "TechNova", tagline: "Inovasi Masa Depan", logoUrl: "https://placehold.co/100x50/D32F2F/FFFFFF?text=TechNova", linkUrl: "#" },
-            { name: "EcoWorld", tagline: "Solusi Hijau", logoUrl: "https://placehold.co/100x50/388E3C/FFFFFF?text=EcoWorld", linkUrl: "#" },
-            { name: "Gaya Mode", tagline: "Tren Terkini", logoUrl: "https://placehold.co/100x50/FBC02D/333333?text=Gaya+Mode", linkUrl: "#" },
-        ];
+        // ===== KONFIGURASI & STATE =====
+        const N8N_FETCH_URL = 'https://rested-on-bullfrog.ngrok-free.app/webhook/beritakan-input';
+        let newsData = []; // Akan diisi data dari n8n
+        let favorites = JSON.parse(localStorage.getItem('beritakan_favorites')) || [];
 
-        // --- ELEMEN DOM ---
+        // ===== ELEMEN DOM =====
+        const userGreeting = document.getElementById('user-greeting');
         const trendingSliderContainer = document.getElementById('trending-news-slider');
         const newsContainer = document.getElementById('news-container');
-        const favoriteContainer = document.getElementById('favorite-container');
-        const berandaSponsorsContainer = document.getElementById('beranda-sponsors');
-        const favoritSponsorsContainer = document.getElementById('favorit-sponsors');
         const categoryList = document.getElementById('category-list');
-        const userGreeting = document.getElementById('user-greeting');
+        const favoriteContainer = document.getElementById('favorite-container');
         const tabs = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
         const modal = document.getElementById('news-modal');
         const closeModalBtn = document.getElementById('close-modal-btn');
         
-        // --- STATE ---
-        let favorites = JSON.parse(localStorage.getItem('beritakan_favorites')) || [];
+        // ===== FUNGSI UTAMA & INISIALISASI =====
 
-        // --- FUNGSI ---
-
+        /**
+         * Inisialisasi aplikasi, mengurus Telegram Web App dan memulai pengambilan data
+         */
         const initApp = () => {
-            if (window.Telegram && window.Telegram.WebApp) {
+            try {
                 const tg = window.Telegram.WebApp;
                 tg.ready();
-                if (tg.colorScheme === 'dark') document.documentElement.classList.add('dark');
+                if (tg.colorScheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                }
                 const user = tg.initDataUnsafe?.user;
-                userGreeting.textContent = (user && user.first_name) ? `Hai, ${user.first_name}!` : 'Hai!';
+                userGreeting.textContent = (user && user.first_name) ? `Hai, ${user.first_name}!` : 'Selamat Datang!';
                 tg.expand();
-            } else {
-                 userGreeting.textContent = 'Hai, Pengguna!';
-                 console.warn("Telegram Web App script not loaded.");
+            } catch (e) {
+                console.warn("Telegram Web App script not loaded or in development mode.");
+                userGreeting.textContent = 'Selamat Datang!';
             }
-            renderCategories();
-            renderTrendingNewsSlider();
-            renderNews();
+            
+            fetchNewsData();
             setupEventListeners();
         };
 
-        const renderTrendingNewsSlider = () => {
-            const trendingNews = newsData.filter(n => n.trending);
-            if (trendingNews.length === 0) {
-                trendingSliderContainer.innerHTML = '';
-                return;
+        /**
+         * Mengambil data berita dari endpoint n8n
+         */
+        const fetchNewsData = async () => {
+            try {
+                const response = await fetch(N8N_FETCH_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                newsData = data; // Simpan data ke state global
+                
+                // Setelah data berhasil diambil, render semua komponen
+                renderTrendingNewsSlider();
+                renderNews();
+                renderCategories();
+            } catch (error) {
+                console.error("Gagal mengambil data berita:", error);
+                newsContainer.innerHTML = `<p class="text-center text-red-500 py-8">Gagal memuat berita. Silakan coba lagi nanti.</p>`;
             }
+        };
 
-            const trendingCards = trendingNews.map(newsItem => `
-                <div class="trending-card read-more-btn flex-shrink-0 w-48 h-64 rounded-lg shadow-lg overflow-hidden relative cursor-pointer group" data-id="${newsItem.id}">
-                    <img src="${newsItem.thumbnailUrl.replace('120x120', '200x300')}" alt="${newsItem.title}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300">
+        // ===== FUNGSI RENDER =====
+
+        const renderTrendingNewsSlider = () => {
+            const trendingNews = newsData.filter(n => n.trending === true);
+            if (trendingNews.length === 0) return;
+
+            const trendingCards = trendingNews.map(item => `
+                <div class="read-more-btn flex-shrink-0 w-48 h-64 rounded-lg shadow-lg overflow-hidden relative cursor-pointer group" data-id="${item.id}">
+                    <img src="${item.thumbnail}" alt="${item.judul}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300">
                     <div class="absolute inset-0 trending-card-overlay"></div>
                     <div class="absolute bottom-0 left-0 p-3 text-white">
-                        <span class="text-xs bg-beritakanRed px-2 py-1 rounded">${newsItem.category}</span>
-                        <h4 class="font-bold mt-1">${newsItem.title}</h4>
+                        <span class="text-xs bg-beritakanRed px-2 py-1 rounded">${item.kategori}</span>
+                        <h4 class="font-bold mt-1 text-sm">${item.judul}</h4>
                     </div>
                 </div>
             `).join('');
@@ -205,48 +209,22 @@
                     </div>
                 </div>
             `;
-            
-            // Re-attach event listeners for trending cards
-            trendingSliderContainer.querySelectorAll('.trending-card').forEach(card => {
-                card.addEventListener('click', () => showModal(parseInt(card.dataset.id)));
-            });
         };
-
-        const getSponsorSectionHTML = () => {
-            const sponsorCards = sponsorData.map(sponsor => `
-                <a href="${sponsor.linkUrl}" target="_blank" class="flex-shrink-0 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 flex items-center space-x-4 transition-transform hover:scale-105">
-                    <img src="${sponsor.logoUrl}" alt="${sponsor.name}" class="h-12 w-auto rounded-md object-contain">
-                    <div>
-                        <p class="font-bold text-sm text-gray-800 dark:text-gray-200">${sponsor.name}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">${sponsor.tagline}</p>
-                    </div>
-                </a>
-            `).join('');
-
-            return `
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
-                    <h2 class="text-lg font-bold mb-4 text-beritakanRed">Didukung oleh</h2>
-                    <div class="flex space-x-4 overflow-x-auto pb-4 no-scrollbar">
-                        ${sponsorCards}
-                    </div>
-                </div>
-            `;
-        };
-
+        
         const renderNewsCard = (newsItem, isFavorite) => {
             const heartIcon = isFavorite ? '❤️' : '🤍';
             return `
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.02] duration-300">
                     <div class="flex items-start space-x-4 p-4">
-                        <img src="${newsItem.thumbnailUrl}" alt="${newsItem.title}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-md flex-shrink-0">
+                        <img src="${newsItem.thumbnail}" alt="${newsItem.judul}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-md flex-shrink-0">
                         <div class="flex-grow">
                              <div class="flex justify-between items-start">
-                                <h3 class="text-base sm:text-lg font-bold mb-1 flex-1 pr-2">${newsItem.title}</h3>
+                                <h3 class="text-base sm:text-lg font-bold mb-1 flex-1 pr-2">${newsItem.judul}</h3>
                                 <button class="like-btn text-2xl" data-id="${newsItem.id}">${heartIcon}</button>
                             </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">${newsItem.date} &bull; ${newsItem.category}</p>
-                            <p class="hidden sm:block text-sm text-gray-700 dark:text-gray-300 mb-4">${newsItem.summary}</p>
-                            <button class="read-more-btn bg-beritakanRed text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-700 transition-colors mt-2">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">${newsItem.tanggal} • ${newsItem.kategori}</p>
+                            <p class="hidden sm:block text-sm text-gray-700 dark:text-gray-300 mb-3">${newsItem.ringkasan}</p>
+                            <button class="read-more-btn bg-beritakanRed text-white px-4 py-2 rounded-md text-sm font-semibold hover:bg-red-700 transition-colors mt-1" data-id="${newsItem.id}">
                                 Baca
                             </button>
                         </div>
@@ -254,51 +232,44 @@
                 </div>
             `;
         };
-        
+
         const renderNews = (filterCategory = null) => {
             newsContainer.innerHTML = '';
-            trendingSliderContainer.style.display = filterCategory ? 'none' : 'block'; // Sembunyikan slider jika filter aktif
+            trendingSliderContainer.style.display = filterCategory ? 'none' : 'block';
 
-            const filteredNews = filterCategory ? newsData.filter(n => n.category === filterCategory) : newsData;
+            const filteredNews = filterCategory ? newsData.filter(n => n.kategori === filterCategory) : newsData;
             
             if (filteredNews.length === 0) {
-                 newsContainer.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400">Tidak ada berita ditemukan.</p>`;
-                 berandaSponsorsContainer.innerHTML = '';
+                 newsContainer.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 py-8">Tidak ada berita untuk kategori ini.</p>`;
                  return;
             }
 
             filteredNews.forEach(newsItem => {
                 const isFavorite = favorites.includes(newsItem.id);
-                const card = document.createElement('div');
-                card.innerHTML = renderNewsCard(newsItem, isFavorite);
-                card.querySelector('.read-more-btn').addEventListener('click', () => showModal(newsItem.id));
-                card.querySelector('.like-btn').addEventListener('click', (e) => toggleFavorite(e, newsItem.id, card));
-                newsContainer.appendChild(card);
+                const cardHTML = renderNewsCard(newsItem, isFavorite);
+                newsContainer.insertAdjacentHTML('beforeend', cardHTML);
             });
-
-            berandaSponsorsContainer.innerHTML = getSponsorSectionHTML();
         };
 
         const renderFavorites = () => {
             favoriteContainer.innerHTML = '';
             if (favorites.length === 0) {
                 favoriteContainer.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 mt-8">Anda belum memiliki berita favorit.</p>`;
-                favoritSponsorsContainer.innerHTML = '';
                 return;
             }
             const favoriteNews = newsData.filter(n => favorites.includes(n.id));
+            if (favoriteNews.length === 0) {
+                favoriteContainer.innerHTML = `<p class="text-center text-gray-500 dark:text-gray-400 mt-8">Berita favorit tidak ditemukan (mungkin telah dihapus).</p>`;
+                return;
+            }
             favoriteNews.forEach(newsItem => {
-                const card = document.createElement('div');
-                card.innerHTML = renderNewsCard(newsItem, true);
-                card.querySelector('.read-more-btn').addEventListener('click', () => showModal(newsItem.id));
-                card.querySelector('.like-btn').addEventListener('click', (e) => toggleFavorite(e, newsItem.id, card));
-                favoriteContainer.appendChild(card);
+                const cardHTML = renderNewsCard(newsItem, true);
+                favoriteContainer.insertAdjacentHTML('beforeend', cardHTML);
             });
-            favoritSponsorsContainer.innerHTML = getSponsorSectionHTML();
         };
         
         const renderCategories = () => {
-            const categories = ['Semua', ...new Set(newsData.map(n => n.category))];
+            const categories = ['Semua', ...new Set(newsData.map(n => n.kategori))];
             categoryList.innerHTML = '';
             categories.forEach(cat => {
                 const button = document.createElement('button');
@@ -311,74 +282,90 @@
                 categoryList.appendChild(button);
             });
         };
+        
+        // ===== FUNGSI INTERAKSI PENGGUNA =====
 
         const switchTab = (tabName) => {
             tabContents.forEach(content => content.classList.add('hidden'));
             tabs.forEach(tab => {
-                tab.classList.toggle('text-beritakanRed', tab.dataset.tab === tabName);
-                tab.classList.toggle('border-b-2', tab.dataset.tab === tabName);
-                tab.classList.toggle('border-beritakanRed', tab.dataset.tab === tabName);
-                tab.classList.toggle('text-gray-500', tab.dataset.tab !== tabName);
-                tab.classList.toggle('dark:text-gray-400', tab.dataset.tab !== tabName);
+                const isActive = tab.dataset.tab === tabName;
+                tab.classList.toggle('text-beritakanRed', isActive);
+                tab.classList.toggle('border-b-2', isActive);
+                tab.classList.toggle('border-beritakanRed', isActive);
+                tab.classList.toggle('text-gray-500', !isActive);
+                tab.classList.toggle('dark:text-gray-400', !isActive);
             });
             const activeContent = document.getElementById(`${tabName}-content`);
             activeContent.classList.remove('hidden');
             activeContent.classList.add('fade-in');
+            
             if (tabName === 'favorit') renderFavorites();
         };
 
-        const toggleFavorite = (event, newsId, cardElement) => {
-            event.stopPropagation();
-            const btn = event.currentTarget;
+        const toggleFavorite = (newsId, btnElement) => {
             const index = favorites.indexOf(newsId);
             if (index > -1) {
                 favorites.splice(index, 1);
-                btn.textContent = '🤍';
+                btnElement.textContent = '🤍';
             } else {
                 favorites.push(newsId);
-                btn.textContent = '❤️';
+                btnElement.textContent = '❤️';
             }
             localStorage.setItem('beritakan_favorites', JSON.stringify(favorites));
-            if (document.getElementById('favorit-content').offsetParent !== null) {
-                 // Hapus kartu dari DOM jika tidak favorit lagi saat di tab favorit
-                if (index > -1) {
-                    cardElement.style.transition = 'opacity 0.3s ease';
-                    cardElement.style.opacity = '0';
-                    setTimeout(() => renderFavorites(), 300);
-                }
+
+            // Jika sedang di tab favorit, hapus kartu dari tampilan
+            if (document.getElementById('favorit-content').offsetParent !== null && index > -1) {
+                const cardToRemove = btnElement.closest('.bg-white');
+                cardToRemove.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                cardToRemove.style.opacity = '0';
+                cardToRemove.style.transform = 'scale(0.95)';
+                setTimeout(() => cardToRemove.remove(), 300);
             }
         };
 
         const showModal = (newsId) => {
             const newsItem = newsData.find(n => n.id === newsId);
             if (!newsItem) return;
-            document.getElementById('modal-title').textContent = newsItem.title;
-            document.getElementById('modal-date').textContent = `${newsItem.date} • ${newsItem.category}`;
-            document.getElementById('modal-body').innerHTML = newsItem.content;
+            document.getElementById('modal-title').textContent = newsItem.judul;
+            document.getElementById('modal-date').textContent = `${newsItem.tanggal} • ${newsItem.kategori}`;
+            document.getElementById('modal-body').innerHTML = newsItem.isi;
             modal.classList.remove('hidden');
         };
 
         const hideModal = () => modal.classList.add('hidden');
         
+        // ===== EVENT LISTENERS SETUP =====
+        
         const setupEventListeners = () => {
             tabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+            
             categoryList.addEventListener('click', (e) => {
                 if (e.target.classList.contains('category-filter-btn')) {
                     const category = e.target.dataset.category;
-                    document.querySelectorAll('.category-filter-btn').forEach(btn => {
-                        btn.classList.remove('bg-beritakanRed', 'text-white');
-                        btn.classList.add('bg-gray-200', 'dark:bg-gray-700');
-                    });
+                    document.querySelectorAll('.category-filter-btn').forEach(btn => btn.classList.remove('bg-beritakanRed', 'text-white'));
                     e.target.classList.add('bg-beritakanRed', 'text-white');
-                    e.target.classList.remove('bg-gray-200', 'dark:bg-gray-700');
                     renderNews(category === 'Semua' ? null : category);
                     switchTab('beranda');
                 }
             });
+
+            // Event delegation untuk tombol read more dan like
+            document.getElementById('app-container').addEventListener('click', (e) => {
+                const readBtn = e.target.closest('.read-more-btn');
+                const likeBtn = e.target.closest('.like-btn');
+                if (readBtn) {
+                    showModal(readBtn.dataset.id);
+                }
+                if (likeBtn) {
+                    toggleFavorite(likeBtn.dataset.id, likeBtn);
+                }
+            });
+
             closeModalBtn.addEventListener('click', hideModal);
             modal.addEventListener('click', (e) => { if (e.target === modal) hideModal(); });
         };
         
+        // Mulai aplikasi
         initApp();
     });
     </script>
