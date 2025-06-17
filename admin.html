@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Beritakan</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s;
+        }
+
+        /* Styling untuk notifikasi */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 100;
+        }
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .notification.success {
+            background-color: #28a745; /* Hijau */
+        }
+        .notification.error {
+            background-color: #dc3545; /* Merah */
+        }
+    </style>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        beritakanRed: '#D32F2F',
+                        beritakanRedHover: '#B71C1C',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-100">
+
+    <!-- Kontainer utama panel admin, disembunyikan secara default -->
+    <main id="admin-panel" class="container mx-auto max-w-4xl p-4 sm:p-6 hidden">
+
+        <!-- ===== HEADER ===== -->
+        <header class="mb-8 pb-4 border-b border-gray-300">
+            <h1 class="text-3xl font-extrabold text-beritakanRed">🛠️ Admin Panel - Beritakan</h1>
+            <p class="text-gray-600 mt-1">Gunakan form di bawah ini untuk menambah berita baru.</p>
+        </header>
+
+        <!-- ===== FORM INPUT BERITA ===== -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Input Berita Baru</h2>
+            <form id="news-form" class="space-y-5">
+                
+                <!-- Judul -->
+                <div>
+                    <label for="judul" class="block text-sm font-medium text-gray-700 mb-1">Judul Berita</label>
+                    <input type="text" id="judul" name="judul" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed">
+                </div>
+
+                <!-- Tanggal & Kategori -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="tanggal" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Publikasi</label>
+                        <input type="date" id="tanggal" name="tanggal" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed">
+                    </div>
+                    <div>
+                        <label for="kategori" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                        <select id="kategori" name="kategori" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed">
+                            <option>Teknologi</option>
+                            <option>Politik</option>
+                            <option>Gaya Hidup</option>
+                            <option>Hiburan</option>
+                            <option>Olahraga</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Ringkasan -->
+                <div>
+                    <label for="ringkasan" class="block text-sm font-medium text-gray-700 mb-1">Ringkasan (Summary)</label>
+                    <textarea id="ringkasan" name="ringkasan" rows="3" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed"></textarea>
+                </div>
+
+                <!-- Isi Berita -->
+                <div>
+                    <label for="isi" class="block text-sm font-medium text-gray-700 mb-1">Isi Berita Lengkap</label>
+                    <textarea id="isi" name="isi" rows="7" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed" placeholder="Anda bisa menggunakan tag HTML sederhana seperti <p>, <b>, <i>, <ul>, <li>"></textarea>
+                </div>
+                
+                <!-- URL Gambar & Trending -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div>
+                        <label for="thumbnail" class="block text-sm font-medium text-gray-700 mb-1">URL Gambar Thumbnail</label>
+                        <input type="url" id="thumbnail" name="thumbnail" required class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-beritakanRed focus:border-beritakanRed" placeholder="https://contoh.com/gambar.jpg">
+                    </div>
+                    <div class="pt-6">
+                        <label for="trending" class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="trending" name="trending" class="h-5 w-5 rounded border-gray-300 text-beritakanRed focus:ring-beritakanRed">
+                            <span class="text-sm font-medium text-gray-700">Jadikan Berita Trending? 🔥</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Tombol Aksi -->
+                <div class="flex items-center gap-4 pt-4 border-t border-gray-200">
+                    <button type="submit" id="submit-btn" class="bg-beritakanRed text-white font-bold py-2 px-6 rounded-md hover:bg-beritakanRedHover transition-colors flex items-center gap-2">
+                        <span id="submit-text">+ Tambah Berita</span>
+                        <div id="submit-spinner" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin hidden"></div>
+                    </button>
+                    <button type="button" id="reset-btn" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-md hover:bg-gray-600 transition-colors">
+                        🔁 Reset Form
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ===== DAFTAR BERITA (Dummy) ===== -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Daftar Berita</h2>
+            <p class="text-gray-500">Fitur daftar berita akan dikelola langsung melalui Google Sheet atau database backend Anda.</p>
+            <div class="overflow-x-auto mt-4">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Contoh Berita...</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Teknologi</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Tersimpan</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notifikasi akan ditambahkan di sini oleh JavaScript -->
+
+    <script>
+    // Jalankan skrip setelah seluruh konten halaman dimuat
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // ===== BAGIAN KONFIGURASI & KEAMANAN =====
+
+        // Endpoint webhook n8n Anda. Ganti dengan URL Anda yang sebenarnya.
+        const N8N_WEBHOOK_URL = 'https://rested-on-bullfrog.ngrok-free.app/webhook/beritakan-input';
+        
+        // Hash SHA-256 dari password 'berita123'. Jangan simpan password asli di sini.
+        const ADMIN_PASSWORD_HASH = 'a654b5de0f6e04a97f4c238dafd62f21651453175e1b212adf8917a516c55279';
+
+        /**
+         * Fungsi untuk menghitung hash SHA-256 dari sebuah string.
+         * Menggunakan Web Crypto API yang aman dan modern.
+         * @param {string} message - String yang akan di-hash.
+         * @returns {Promise<string>} - Hash dalam format hex.
+         */
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        /**
+         * Fungsi utama untuk autentikasi. Meminta password dan memvalidasi hash-nya.
+         */
+        async function authenticate() {
+            const password = prompt("Masukkan password admin:");
+
+            if (!password) {
+                // Jika user menekan cancel atau tidak mengisi apa-apa, kosongkan halaman.
+                document.body.innerHTML = '<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Dibatalkan</h1>';
+                return;
+            }
+            
+            // Hitung hash dari password yang dimasukkan
+            const inputHash = await sha256(password);
+
+            if (inputHash === ADMIN_PASSWORD_HASH) {
+                // Jika hash cocok, tampilkan panel admin.
+                document.getElementById('admin-panel').classList.remove('hidden');
+            } else {
+                // Jika hash tidak cocok, tampilkan pesan error dan kosongkan halaman.
+                alert("Password salah! Akses ditolak.");
+                document.body.innerHTML = '<h1 class="text-center text-2xl font-bold mt-10 text-red-600">Akses Ditolak</h1>';
+            }
+        }
+
+
+        // ===== BAGIAN FUNGSI FORM & APLIKASI =====
+
+        const newsForm = document.getElementById('news-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const submitText = document.getElementById('submit-text');
+        const submitSpinner = document.getElementById('submit-spinner');
+
+        /**
+         * Menampilkan notifikasi sukses atau gagal.
+         * @param {string} message - Pesan yang akan ditampilkan.
+         * @param {string} type - 'success' atau 'error'.
+         */
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // Tampilkan notifikasi
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            // Sembunyikan dan hapus notifikasi setelah 3 detik
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+        
+        // Listener untuk submit form berita
+        newsForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Mencegah form melakukan submit standar
+
+            // Tampilkan spinner dan nonaktifkan tombol
+            submitText.textContent = 'Mengirim...';
+            submitSpinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            // Kumpulkan data dari form ke dalam objek payload
+            const payload = {
+                judul: document.getElementById('judul').value,
+                tanggal: document.getElementById('tanggal').value,
+                kategori: document.getElementById('kategori').value,
+                ringkasan: document.getElementById('ringkasan').value,
+                isi: document.getElementById('isi').value,
+                thumbnail: document.getElementById('thumbnail').value,
+                trending: document.getElementById('trending').checked
+            };
+
+            try {
+                // Kirim data ke webhook n8n menggunakan fetch()
+                const response = await fetch(N8N_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    // Jika respons sukses (status 2xx)
+                    showNotification('Berita berhasil ditambahkan!', 'success');
+                    newsForm.reset(); // Kosongkan form setelah sukses
+                } else {
+                    // Jika server memberikan respons error (status 4xx atau 5xx)
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Error: ${response.status}`);
+                }
+            } catch (error) {
+                // Jika terjadi error jaringan atau error lainnya
+                console.error('Gagal mengirim data:', error);
+                showNotification(`Gagal mengirim data: ${error.message}`, 'error');
+            } finally {
+                // Apapun hasilnya, kembalikan tombol ke keadaan semula
+                submitText.textContent = '+ Tambah Berita';
+                submitSpinner.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Listener untuk tombol reset form
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            newsForm.reset();
+        });
+
+
+        // ===== TITIK MASUK APLIKASI =====
+        // Jalankan proses autentikasi saat halaman pertama kali dimuat.
+        authenticate();
+
+    });
+    </script>
+</body>
+</html>
